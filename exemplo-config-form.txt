@@ -1,0 +1,107 @@
+Configuração do Esquema Yup
+A lógica do TypeScript e do Yup é a mesma, independentemente do gerenciador de pacotes.
+
+Crie seu esquema de validação em um arquivo (ex: src/validation/userSchema.ts):
+
+TypeScript
+
+// src/validation/userSchema.ts
+import * as yup from 'yup';
+
+export const userSchema = yup.object({
+  nome: yup
+    .string()
+    .required('O nome é obrigatório para o cadastro')
+    .min(3, 'O nome deve ter no mínimo 3 caracteres'),
+  
+  idade: yup
+    .number()
+    .required('A idade é obrigatória')
+    .positive('A idade deve ser um número positivo')
+    .integer('A idade deve ser um número inteiro'),
+
+  email: yup
+    .string()
+    .email('O formato do e-mail é inválido')
+    .required('O e-mail é obrigatório'),
+});
+
+export type UserFormData = yup.InferType<typeof userSchema>;
+
+
+
+Criação do Componente de Formulário (Integração)
+O componente React continua idêntico, pois a integração entre MUI, RHF e Yup é baseada em código, não no gerenciador de pacotes.
+
+TypeScript
+
+import React from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { TextField, Button, Box, Typography } from '@mui/material';
+
+import { userSchema, UserFormData } from '@/src/validation/userSchema';
+
+export default function CadastroForm() {
+  const { 
+    handleSubmit, 
+    control, 
+    formState: { errors } 
+  } = useForm<UserFormData>({
+    // 1. Conecta o Yup ao React Hook Form
+    resolver: yupResolver(userSchema),
+    defaultValues: {
+      nome: '',
+      idade: 0,
+      email: '',
+    },
+  });
+
+  const onSubmit = (data: UserFormData) => {
+    // 4. Lógica de envio: Os dados só chegam aqui se a validação Yup for bem-sucedida!
+    console.log('Dados prontos para envio:', data);
+    alert(`Dados enviados com sucesso! Nome: ${data.nome}`);
+  };
+
+  return (
+    <Box 
+      component="form" 
+      onSubmit={handleSubmit(onSubmit)} 
+      noValidate 
+      sx={{ mt: 3, maxWidth: 400, mx: 'auto' }}
+    >
+      <Typography variant="h5" component="h1" gutterBottom>
+        Formulário de Cadastro
+      </Typography>
+
+      {/* 2. Campo NOME (Integrado via Controller) */}
+      <Controller
+        name="nome"
+        control={control}
+        render={({ field }) => (
+          <TextField
+            {...field} // Inclui props: value, onChange, onBlur
+            label="Nome Completo"
+            margin="normal"
+            fullWidth
+            // MUI: Exibe o estado de erro
+            error={!!errors.nome} 
+            // MUI: Exibe a mensagem de erro do Yup
+            helperText={errors.nome?.message} 
+          />
+        )}
+      />
+
+      {/* ... Inclua os demais campos (idade, email) com o mesmo padrão ... */}
+
+      <Button
+        type="submit"
+        variant="contained"
+        sx={{ mt: 3, mb: 2 }}
+        fullWidth
+      >
+        Cadastrar
+      </Button>
+    </Box>
+  );
+}
