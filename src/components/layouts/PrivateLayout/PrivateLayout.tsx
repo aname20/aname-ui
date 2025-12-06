@@ -1,5 +1,6 @@
 import { SidebarDrawer } from '@/components/common/SidebarDrawer'
 import { useAuthStore } from '@/stores/authStore'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import HomeIcon from '@mui/icons-material/Home'
 import MedicationIcon from '@mui/icons-material/Medication'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -14,15 +15,17 @@ import {
   IconButton,
   Paper,
   Toolbar,
+  Typography,
 } from '@mui/material'
 import React, { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
 
 interface PrivateLayoutProps {
   children: React.ReactNode
+  title?: string;
 }
 
-export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
+export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ title, children }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -93,7 +96,25 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
             alignItems: 'center',
           }}
         >
-          <Box
+         {title?
+         <>
+           <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="voltar"
+            size="large"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+         
+          <Typography variant="body1" sx={{ fontSize: "20px" }}>
+            {title}
+          </Typography>
+         
+         </>
+         
+         :  <Box
             component="img"
             src="/logo.svg"
             alt="AnAme"
@@ -101,7 +122,7 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
               height: 40,
               width: 'auto',
             }}
-          />
+          />}
           <IconButton
             edge="end"
             color="inherit"
