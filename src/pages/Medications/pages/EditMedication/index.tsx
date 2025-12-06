@@ -14,15 +14,24 @@ import {
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
-import AccessTimeIcon from '@mui/iconxs-material/AccessTime'
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import AddIcon from '@mui/icons-material/Add'
 import NotificationsIcon from '@mui/icons-material/Notifications'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate, useParams } from 'react-router'
 
-// Mock data - em produção viria de uma API
-const medicationData: { [key: string]: any } = {
+
+const medicationData: { [key: string]: {
+  medication: string;
+  dependent: string;
+  doctor: string;
+  dosage: string;
+  dateUntil: string;
+  continuousUse: boolean;
+  times: string[];
+  comments: string;
+} } = {
   'clonazepam': {
     medication: 'Clonazepam',
     dependent: 'graca-lima',
@@ -38,8 +47,7 @@ const medicationData: { [key: string]: any } = {
 export const EditMedication: React.FC = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  
-  // Em produção, buscar dados do remédio pelo ID
+
   const initialData = medicationData[id || 'clonazepam'] || {
     medication: '',
     dependent: '',

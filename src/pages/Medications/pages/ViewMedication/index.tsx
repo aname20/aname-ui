@@ -10,6 +10,7 @@ import {
   MenuItem,
   Chip,
   Divider,
+  Tooltip,
 } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import EditIcon from '@mui/icons-material/Edit'
@@ -17,9 +18,18 @@ import ShareIcon from '@mui/icons-material/Share'
 import DeleteIcon from '@mui/icons-material/Delete'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useNavigate, useParams } from 'react-router'
+import { ModalConfirmation } from '../../../../components/ModalConfirmation'
 
-// Mock data - em produção viria de uma API
-const medicationData: { [key: string]: any } = {
+const medicationData: { [key: string]: {
+  name: string;
+  dosage: string;
+  person: string;
+  personAge: number;
+  doctor: string;
+  comments: string;
+  continuousUse: boolean;
+  times: { time: string; day: string }[];
+} } = {
   'clonazepam': {
     name: 'Clonazepam',
     dosage: '5mg',
@@ -43,9 +53,9 @@ export const ViewMedication: React.FC = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const open = Boolean(anchorEl)
 
-  // Em produção, buscar dados do remédio pelo ID
   const medication = medicationData[id || 'clonazepam'] || medicationData['clonazepam']
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -63,7 +73,7 @@ export const ViewMedication: React.FC = () => {
 
   const handleShare = () => {
     handleMenuClose()
-    // Lógica para compartilhar
+
     if (navigator.share) {
       navigator.share({
         title: medication.name,
@@ -74,15 +84,46 @@ export const ViewMedication: React.FC = () => {
 
   const handleDelete = () => {
     handleMenuClose()
-    if (window.confirm(`Tem certeza que deseja excluir ${medication.name}?`)) {
-      // Lógica para excluir
-      navigate('/medications')
-    }
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    // Lógica para excluir
+    navigate('/medications')
+    setIsDeleteModalOpen(false)
+  }
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false)
   }
 
   const handlePersonClick = () => {
     // Navegar para detalhes da pessoa
   }
+
+  const TimeLabelIcon = ({ time, day }: { time: string; day: string }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <span>{`${time} ${day}`}</span>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', ml: 0.5 }}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#456CE8"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ marginLeft: 4 }}
+        >
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      </Box>
+    </Box>
+  );
 
   return (
     <Box
@@ -104,7 +145,6 @@ export const ViewMedication: React.FC = () => {
           gap: 3,
         }}
       >
-        {/* Título e Menu */}
         <Box
           sx={{
             display: 'flex',
@@ -130,7 +170,6 @@ export const ViewMedication: React.FC = () => {
           </IconButton>
         </Box>
 
-        {/* Menu de Contexto */}
         <Menu
           anchorEl={anchorEl}
           open={open}
@@ -152,21 +191,20 @@ export const ViewMedication: React.FC = () => {
           }}
         >
           <MenuItem onClick={handleEdit}>
-            <EditIcon sx={{ mr: 1.5, fontSize: '1.2rem' }} />
             Editar
+            <EditIcon sx={{ ml: 'auto', fontSize: '1.2rem', color: 'primary.main' }} />
           </MenuItem>
           <MenuItem onClick={handleShare}>
-            <ShareIcon sx={{ mr: 1.5, fontSize: '1.2rem' }} />
             Compartilhar
+            <ShareIcon sx={{ ml: 'auto', fontSize: '1.2rem', color: 'primary.main' }} />
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-            <DeleteIcon sx={{ mr: 1.5, fontSize: '1.2rem' }} />
             Excluir
+            <DeleteIcon sx={{ ml: 'auto', fontSize: '1.2rem', color: 'error.main' }} />
           </MenuItem>
         </Menu>
 
-        {/* Card da Pessoa */}
         <Card
           sx={{
             bgcolor: 'background.paper',
@@ -222,55 +260,62 @@ export const ViewMedication: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Detalhes do Médico */}
-        <Box>
-          <Typography
-            variant="body2"
-            sx={{
-              mb: 0.5,
-              fontSize: { xs: '0.8rem', sm: '0.875rem' },
-              color: 'text.secondary',
-            }}
-          >
-            Médico
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              fontSize: { xs: '0.95rem', sm: '1rem' },
-              color: 'primary.main',
-              fontWeight: 500,
-            }}
-          >
-            {medication.doctor}
-          </Typography>
-        </Box>
+        <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{
+                mb: 0.5,
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                color: 'text.secondary',
+              }}
+            >
+              Médico
+            </Typography>
 
-        {/* Dosagem */}
-        <Box>
-          <Typography
-            variant="body2"
-            sx={{
-              mb: 0.5,
-              fontSize: { xs: '0.8rem', sm: '0.875rem' },
-              color: 'text.secondary',
-            }}
-          >
-            Dosagem
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              fontSize: { xs: '0.95rem', sm: '1rem' },
-              color: 'primary.main',
-              fontWeight: 500,
-            }}
-          >
-            {medication.dosage}
-          </Typography>
-        </Box>
+            <Tooltip title={medication.doctor} placement="top">
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: { xs: '0.95rem', sm: '1rem' },
+                  color: 'primary.main',
+                  maxWidth: 200,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                {medication.doctor}
+              </Typography>
+            </Tooltip>
+          </Box>
 
-        {/* Comentários */}
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{
+                mb: 0.5,
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                color: 'text.secondary',
+              }}
+            >
+              Dosagem
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                fontSize: { xs: '0.95rem', sm: '1rem' },
+                color: 'primary.main',
+                fontWeight: 500,
+              }}
+            >
+              {medication.dosage}
+            </Typography>
+          </Box>
+        </div>
+
         <Box>
           <Typography
             variant="body2"
@@ -286,14 +331,13 @@ export const ViewMedication: React.FC = () => {
             variant="body1"
             sx={{
               fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-              color: 'text.secondary',
+              color: 'primary.main',
             }}
           >
             {medication.comments}
           </Typography>
         </Box>
 
-        {/* Até Dia */}
         <Box>
           <Typography
             variant="body2"
@@ -309,14 +353,13 @@ export const ViewMedication: React.FC = () => {
             variant="body1"
             sx={{
               fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-              color: 'text.secondary',
+              color: 'primary.main',
             }}
           >
             {medication.continuousUse ? 'Uso Contínuo' : 'Data específica'}
           </Typography>
         </Box>
 
-        {/* Horários */}
         <Box>
           <Typography
             variant="body2"
@@ -332,17 +375,21 @@ export const ViewMedication: React.FC = () => {
             sx={{
               display: 'flex',
               flexWrap: 'wrap',
+              maxWidth: '60%',
               gap: 1,
             }}
           >
-            {medication.times.map((item: any, index: number) => (
+            {medication.times.map((item: { time: string; day: string }, index: number) => (
               <Chip
                 key={index}
-                label={`${item.time} ${item.day}`}
+                label={
+                  <TimeLabelIcon time={item.time} day={item.day} />
+                }
                 sx={{
-                  bgcolor: 'primary.light',
+                  bgcolor: 'white',
                   color: 'primary.main',
                   borderRadius: 2,
+                  border: '0.5px solid #456CE8',
                   fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                   height: { xs: 32, sm: 36 },
                   '& .MuiChip-label': {
@@ -354,6 +401,17 @@ export const ViewMedication: React.FC = () => {
           </Box>
         </Box>
       </Box>
+
+      <ModalConfirmation
+        open={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        title="Você tem certeza que deseja excluir esse remédio?"
+        subtitle="Essa ação não poderá ser desfeita."
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </Box>
   )
 }

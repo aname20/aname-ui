@@ -3,9 +3,9 @@ import { Routes, Route } from 'react-router'
 import { Home } from '../pages/Home'
 import { Medications } from '../pages/Medications'
 import { Settings } from '../pages/Settings'
-import { AddMedication } from '../pages/Medications/AddMedication'
-import { ViewMedication } from '../pages/Medications/ViewMedication'
-import { EditMedication } from '../pages/Medications/EditMedication'
+import { AddMedication } from '../pages/Medications/pages/AddMedication'
+import { ViewMedication } from '../pages/Medications/pages/ViewMedication'
+import { EditMedication } from '../pages/Medications/pages/EditMedication'
 
 export const AppRoutes: React.FC = () => {
   return (
