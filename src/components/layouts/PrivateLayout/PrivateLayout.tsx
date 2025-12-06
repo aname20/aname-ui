@@ -1,3 +1,4 @@
+import { SidebarDrawer } from '@/components/common/SidebarDrawer'
 import { useAuthStore } from '@/stores/authStore'
 import HomeIcon from '@mui/icons-material/Home'
 import MedicationIcon from '@mui/icons-material/Medication'
@@ -14,7 +15,7 @@ import {
   Paper,
   Toolbar,
 } from '@mui/material'
-import React from 'react'
+import React, { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
 
 interface PrivateLayoutProps {
@@ -26,6 +27,9 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const isLoading = useAuthStore((state) => state.isLoading)
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // URL -> índice da aba selecionada
   const currentTab = React.useMemo(() => {
@@ -88,7 +92,13 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
               width: 'auto',
             }}
           />
-          <IconButton edge="end" color="inherit" aria-label="menu" size="large">
+          <IconButton
+            edge="end"
+            color="inherit"
+            aria-label="menu"
+            size="large"
+            onClick={() => setDrawerOpen(true)}
+          >
             <MenuIcon />
           </IconButton>
         </Toolbar>
@@ -117,6 +127,18 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
           <BottomNavigationAction label="Dependentes" icon={<PeopleIcon />} />
         </BottomNavigation>
       </Paper>
+
+      {/* Drawer Lateral */}
+      <SidebarDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        user={user}
+        onNavigate={navigate}
+        onLogout={() => {
+          logout()
+          navigate('/login')
+        }}
+      />
     </Box>
   )
 }
