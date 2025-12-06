@@ -1,6 +1,7 @@
 import { PrivateLayout } from '@/components/layouts/PrivateLayout'
 import { PublicLayout } from '@/components/layouts/PublicLayout'
-import { Login, Register } from '@/pages/Auth'
+import { Login } from '@/pages/Auth/pages/Login/Login'
+import { Register } from '@/pages/Auth/pages/Register/Register'
 import { Home } from '@/pages/Home'
 import { Medications } from '@/pages/Medications'
 import { Settings } from '@/pages/Settings'
