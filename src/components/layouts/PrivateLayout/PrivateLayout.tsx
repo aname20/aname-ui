@@ -12,7 +12,7 @@ import {
   Container,
   IconButton,
   Paper,
-  Toolbar
+  Toolbar,
 } from '@mui/material'
 import React from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
@@ -79,7 +79,7 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
             alignItems: 'center',
           }}
         >
-           <Box
+          <Box
             component="img"
             src="/logo.svg"
             alt="AnAme"
