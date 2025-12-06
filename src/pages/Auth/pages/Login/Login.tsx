@@ -133,16 +133,6 @@ export const Login: React.FC = () => {
           {/* Links */}
           <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Link
-              href="#"
-              underline="hover"
-              sx={{
-                color: 'white',
-                fontSize: '1rem',
-              }}
-            >
-              Esqueceu sua senha?
-            </Link>
-            <Link
               onClick={() => navigate('/register')}
               underline="hover"
               sx={{
