@@ -23,7 +23,14 @@ src/
 │       ├── components/       # Componentes locais (opcional)
 │       ├── hooks/            # Hooks locais (opcional)
 │       ├── utils/            # Utils locais (opcional)
-│       └── types.ts          # Types locais (opcional)
+│       ├── types.ts          # Types locais (opcional)
+│       └── pages/            # Sub-páginas do módulo (opcional)
+│           ├── MedicationList/
+│           │   └── index.tsx
+│           ├── MedicationDetail/
+│           │   └── index.tsx
+│           └── MedicationCreate/
+│               └── index.tsx
 ├── routes/          # Configuração de rotas
 ├── services/        # Serviços de API (uma pasta por entidade)
 │   ├── api/         # Configurações base (axios, BaseService)
