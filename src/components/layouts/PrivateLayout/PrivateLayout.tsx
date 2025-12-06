@@ -71,9 +71,19 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
       }}
     >
-      <AppBar position="fixed" color="primary" elevation={0}>
+      <AppBar 
+        position="fixed" 
+        color="primary" 
+        elevation={0} 
+        sx={{ 
+          maxWidth: '500px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        }}
+      >
         <Toolbar
           sx={{
             minHeight: 56,
@@ -108,14 +118,27 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
 
       <Box
         component="main"
-        sx={{ flex: 1, overflowY: 'auto', bgcolor: '#f5f5f5' }}
+        sx={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          bgcolor: '#f5f5f5',
+          width: '100%',
+          maxWidth: '500px',
+        }}
       >
         <Container sx={{ pt: 2, pb: 8 }}>{children}</Container>
       </Box>
 
       <Paper
         elevation={8}
-        sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}
+        sx={{ 
+          position: 'fixed', 
+          bottom: 0, 
+          left: '50%',
+          transform: 'translateX(-50%)',
+          maxWidth: '500px',
+          width: '100%',
+        }}
       >
         <BottomNavigation
           value={currentTab}
