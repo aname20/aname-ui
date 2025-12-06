@@ -11,7 +11,6 @@ import {
   IconButton,
 } from '@mui/material'
 import HomeIcon from '@mui/icons-material/Home'
-import MedicationIcon from '@mui/icons-material/Medication'
 import PeopleIcon from '@mui/icons-material/People'
 import SettingsIcon from '@mui/icons-material/Settings'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -32,7 +31,6 @@ export const App: React.FC = () => {
   // clique na aba -> navega para rota
   const handleChangeTab = (_: React.SyntheticEvent, value: number) => {
     if (value === 0) navigate('/home')
-    if (value === 1) navigate('/medications')
     if (value === 2) navigate('/settings')
   }
 
@@ -85,7 +83,6 @@ export const App: React.FC = () => {
           sx={{ height: 56 }}
         >
           <BottomNavigationAction label="Início" icon={<HomeIcon />} />
-          <BottomNavigationAction label="Remédios" icon={<MedicationIcon />} />
           <BottomNavigationAction label="Deps." icon={<PeopleIcon />} />
           <BottomNavigationAction label="Ajustes" icon={<SettingsIcon />} />
         </BottomNavigation>
