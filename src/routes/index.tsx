@@ -3,7 +3,7 @@ import { PublicLayout } from '@/components/layouts/PublicLayout'
 import { Login } from '@/pages/Auth/pages/Login'
 import { Register } from '@/pages/Auth/pages/Register'
 import { Home } from '@/pages/Home'
-import { Medications } from '@/pages/Medications'
+import { medicationRoutes } from '@/pages/Medications/routes'
 import { Settings } from '@/pages/Settings'
 import React from 'react'
 import { Navigate, Route, Routes } from 'react-router'
@@ -41,14 +41,10 @@ export const AppRoutes: React.FC = () => {
           </PrivateLayout>
         }
       />
-      <Route
-        path="/medications"
-        element={
-          <PrivateLayout>
-            <Medications />
-          </PrivateLayout>
-        }
-      />
+
+      {/* Rotas de Medications */}
+      {medicationRoutes}
+
       <Route
         path="/settings"
         element={

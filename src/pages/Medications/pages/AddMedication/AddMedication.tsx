@@ -10,16 +10,14 @@ import {
   MenuItem,
   Checkbox,
   FormControlLabel,
-  IconButton,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
-import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import AddIcon from '@mui/icons-material/Add'
 import NotificationsIcon from '@mui/icons-material/Notifications'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate } from 'react-router'
+import { TimeItem } from './components/TimeItem'
 
 export const AddMedication: React.FC = () => {
   const navigate = useNavigate()
@@ -352,45 +350,14 @@ export const AddMedication: React.FC = () => {
           </Box>
 
           {times.map((time, index) => (
-            <Box
+            <TimeItem
               key={index}
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-              }}
-            >
-              <TextField
-                fullWidth
-                size="small"
-                type="time"
-                value={time}
-                onChange={(e) => handleTimeChange(index, e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <AccessTimeIcon sx={{ color: 'text.secondary' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  },
-                }}
-              />
-              {times.length > 1 && (
-                <IconButton
-                  onClick={() => handleRemoveTime(index)}
-                  size="small"
-                  color="error"
-                >
-                  <CloseIcon color="error" />
-                </IconButton>
-              )}
-            </Box>
+              time={time}
+              index={index}
+              handleTimeChange={handleTimeChange}
+              handleRemoveTime={handleRemoveTime}
+              times={times}
+            />
           ))}
 
           <Button

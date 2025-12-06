@@ -8,7 +8,6 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Chip,
   Divider,
   Tooltip,
 } from '@mui/material'
@@ -18,7 +17,8 @@ import ShareIcon from '@mui/icons-material/Share'
 import DeleteIcon from '@mui/icons-material/Delete'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useNavigate, useParams } from 'react-router'
-import { ModalConfirmation } from '../../../../components/ModalConfirmation'
+import { ModalConfirmation } from '@/components/ModalConfirmation'
+import { MedicationTimeItem } from './components/MedicationTimeItem'
 
 const medicationData: { [key: string]: {
   name: string;
@@ -100,30 +100,6 @@ export const ViewMedication: React.FC = () => {
   const handlePersonClick = () => {
     // Navegar para detalhes da pessoa
   }
-
-  const TimeLabelIcon = ({ time, day }: { time: string; day: string }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <span>{`${time} ${day}`}</span>
-
-      <Box sx={{ display: 'flex', alignItems: 'center', ml: 0.5 }}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#456CE8"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ marginLeft: 4 }}
-        >
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-      </Box>
-    </Box>
-  );
 
   return (
     <Box
@@ -380,23 +356,7 @@ export const ViewMedication: React.FC = () => {
             }}
           >
             {medication.times.map((item: { time: string; day: string }, index: number) => (
-              <Chip
-                key={index}
-                label={
-                  <TimeLabelIcon time={item.time} day={item.day} />
-                }
-                sx={{
-                  bgcolor: 'white',
-                  color: 'primary.main',
-                  borderRadius: 2,
-                  border: '0.5px solid #456CE8',
-                  fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                  height: { xs: 32, sm: 36 },
-                  '& .MuiChip-label': {
-                    px: 1.5,
-                  },
-                }}
-              />
+              <MedicationTimeItem key={index} time={item.time} day={item.day} />
             ))}
           </Box>
         </Box>
