@@ -42,13 +42,10 @@ O **AnAme** é uma aplicação mobile-first que ajuda cuidadores a gerenciar med
 ```
 aname-ui/
 ├── docs/                    # 📚 Documentação completa
+│   ├── README.md           # Visão geral da documentação
 │   ├── architecture.md      # Arquitetura e estrutura
-│   ├── components.md        # Padrões de componentes
-│   ├── forms.md            # Formulários e validação
-│   ├── api-integration.md  # Integração com API
-│   ├── authentication.md   # Autenticação e autorização
-│   ├── naming-conventions.md # Nomenclatura
-│   └── styling.md          # Estilos e tema
+│   ├── api.md              # Integração com API
+│   └── development.md       # Guia de desenvolvimento
 ├── src/
 │   ├── assets/             # Imagens, ícones, fontes
 │   ├── components/         # Componentes reutilizáveis
@@ -110,45 +107,21 @@ pnpm lint     # Executa ESLint
 Toda a documentação do projeto está organizada na pasta `docs/`:
 
 ### 🏗️ [Arquitetura](docs/architecture.md)
-- Estrutura de pastas e arquivos
-- Camadas da aplicação
-- Fluxo de dados
-- Decisões arquiteturais
+- Estrutura de pastas e organização
+- Gerenciamento de estado (Zustand, React Query)
+- Convenções de nomenclatura
+- Princípio de Colocation
 
-### 🧩 [Componentes](docs/components.md)
-- Tipos de componentes (Presentational, Container, Compound)
-- Estrutura e organização
-- Boas práticas
-- Exemplos práticos
+### 🌐 [API e Integração](docs/api.md)
+- Configuração Axios e BaseService
+- React Query para cache de dados
+- Autenticação com Zustand
+- Padrões de services e hooks
 
-### 📝 [Formulários](docs/forms.md)
-- React Hook Form + Yup + MUI
-- Padrões de validação
-- Componentes reutilizáveis
-- Tratamento de erros
-
-### 🌐 [Integração com API](docs/api-integration.md)
-- Configuração Axios
-- Services e BaseService
-- React Query
-- Loading states e paginação
-
-### 🔐 [Autenticação](docs/authentication.md)
-- Fluxo de autenticação JWT
-- Auth Store (Zustand) e hooks
-- Rotas protegidas
-- Refresh tokens
-
-### 📏 [Convenções de Nomenclatura](docs/naming-conventions.md)
-- Arquivos e pastas
-- Variáveis e funções
-- Componentes e hooks
-- Git (branches e commits)
-
-### 🎨 [Estilos](docs/styling.md)
-- Material-UI e tema
-- Prop `sx` vs styled-components
-- Responsividade e breakpoints
+### 🛠️ [Guia de Desenvolvimento](docs/development.md)
+- Setup do ambiente
+- Fluxo de trabalho Git
+- Padrões de código
 - Boas práticas
 
 ## 🎯 Padrões e Convenções
