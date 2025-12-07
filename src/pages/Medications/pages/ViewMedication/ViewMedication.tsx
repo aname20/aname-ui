@@ -17,7 +17,7 @@ import ShareIcon from '@mui/icons-material/Share'
 import DeleteIcon from '@mui/icons-material/Delete'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useNavigate, useParams } from 'react-router'
-import { ModalConfirmation } from '@/components/ModalConfirmation'
+import { ModalConfirmation } from '@/components/common/ModalConfirmation'
 import { MedicationTimeItem } from './components/MedicationTimeItem'
 
 const medicationData: { [key: string]: {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import {
   Box,
   Typography,
@@ -20,29 +20,15 @@ import NotificationsIcon from '@mui/icons-material/Notifications'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate, useParams } from 'react-router'
+import { useForm, Controller, useFieldArray, useWatch, type Resolver } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import {
+  editMedicationSchema,
+  type EditMedicationFormData,
+} from './schema/schema'
+import { formatDate } from '@/utils/date'
+import { medicationData } from './constants'
 
-
-const medicationData: { [key: string]: {
-  medication: string;
-  dependent: string;
-  doctor: string;
-  dosage: string;
-  dateUntil: string;
-  continuousUse: boolean;
-  times: string[];
-  comments: string;
-} } = {
-  'clonazepam': {
-    medication: 'Clonazepam',
-    dependent: 'graca-lima',
-    doctor: "Dr. Marco Di'Angelo",
-    dosage: '5mg',
-    dateUntil: '12/01/2025',
-    continuousUse: true,
-    times: ['08:00'],
-    comments: '',
-  },
-}
 
 export const EditMedication: React.FC = () => {
   const navigate = useNavigate()
@@ -59,85 +45,40 @@ export const EditMedication: React.FC = () => {
     comments: '',
   }
 
-  const [formData, setFormData] = useState({
-    medication: initialData.medication,
-    dependent: initialData.dependent,
-    doctor: initialData.doctor,
-    dosage: initialData.dosage,
-    dateUntil: initialData.dateUntil,
-    continuousUse: initialData.continuousUse,
-    comments: initialData.comments,
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<EditMedicationFormData>({
+
+    resolver: yupResolver(editMedicationSchema) as unknown as Resolver<EditMedicationFormData, unknown, EditMedicationFormData>,
+    defaultValues: {
+      medication: initialData.medication,
+      dependent: initialData.dependent,
+      doctor: initialData.doctor,
+      dosage: initialData.dosage,
+      dateUntil: initialData.dateUntil || undefined,
+      continuousUse: initialData.continuousUse,
+      times: initialData.times || ['08:00'],
+      comments: initialData.comments || undefined,
+    },
   })
-  const [times, setTimes] = useState<string[]>(initialData.times || ['08:00'])
 
-  const handleChange = (field: string) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({ ...formData, [field]: e.target.value })
-  }
+  const { fields, append, remove } = useFieldArray({
+    control,
+    // @ts-expect-error - React Hook Form type inference issue with Yup
+    name: 'times',
+  })
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, continuousUse: e.target.checked })
-  }
+  const continuousUse = useWatch({
+    control,
+    name: 'continuousUse',
+    defaultValue: initialData.continuousUse,
+  })
 
-  const formatDate = (value: string): string => {
-    const numbers = value.replace(/\D/g, '')
-    const limitedNumbers = numbers.slice(0, 8)
+  const onSubmit = async (data: EditMedicationFormData) => {
+    console.log('Atualizando:', data)
 
-    if (limitedNumbers.length <= 2) {
-      return limitedNumbers
-    } else if (limitedNumbers.length <= 4) {
-      return `${limitedNumbers.slice(0, 2)}/${limitedNumbers.slice(2)}`
-    } else {
-      return `${limitedNumbers.slice(0, 2)}/${limitedNumbers.slice(2, 4)}/${limitedNumbers.slice(4)}`
-    }
-  }
-
-  const validateDate = (value: string): boolean => {
-    if (value.length !== 10) return false
-
-    const [day, month, year] = value.split('/').map(Number)
-
-    if (day < 1 || day > 31) return false
-    if (month < 1 || month > 12) return false
-    if (year < 1900 || year > 2099) return false
-
-    const date = new Date(year, month - 1, day)
-    if (
-      date.getDate() !== day ||
-      date.getMonth() !== month - 1 ||
-      date.getFullYear() !== year
-    ) {
-      return false
-    }
-
-    return true
-  }
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatDate(e.target.value)
-    setFormData({ ...formData, dateUntil: formatted })
-  }
-
-  const handleAddTime = () => {
-    setTimes([...times, '08:00'])
-  }
-
-  const handleTimeChange = (index: number, value: string) => {
-    const newTimes = [...times]
-    newTimes[index] = value
-    setTimes(newTimes)
-  }
-
-  const handleRemoveTime = (index: number) => {
-    if (times.length > 1) {
-      const newTimes = times.filter((_, i) => i !== index)
-      setTimes(newTimes)
-    }
-  }
-
-  const handleSave = () => {
-    console.log('Atualizando:', { ...formData, times })
     navigate(`/medications/view/${id}`)
   }
 
@@ -145,8 +86,23 @@ export const EditMedication: React.FC = () => {
     navigate(`/medications/view/${id}`)
   }
 
+  const handleAddTime = () => {
+    append('08:00')
+  }
+
+  const handleRemoveTime = (index: number) => {
+    if (fields.length > 1) {
+      remove(index)
+    }
+  }
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
+    >
       <Box>
         <Typography
           variant="body2"
@@ -160,26 +116,33 @@ export const EditMedication: React.FC = () => {
         >
           Remédio
         </Typography>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Pesquisar Remédio"
-          value={formData.medication}
-          onChange={handleChange('medication')}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <SearchIcon sx={{ color: 'text.secondary' }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
+        <Controller
+          name="medication"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              fullWidth
+              size="small"
+              placeholder="Pesquisar Remédio"
+              error={!!errors.medication}
+              helperText={errors.medication?.message}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <SearchIcon sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+          )}
         />
       </Box>
 
@@ -195,38 +158,49 @@ export const EditMedication: React.FC = () => {
         >
           Dependente
         </Typography>
-        <FormControl fullWidth size="small">
-          <Select
-            value={formData.dependent}
-            onChange={(e) =>
-              setFormData({ ...formData, dependent: e.target.value })
-            }
-            displayEmpty
-            renderValue={(selected) => {
-              if (!selected) {
-                return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
-              }
-              const options: { [key: string]: string } = {
-                'graca-lima': 'Graça Lima',
-                'joaquim-bezerra': 'Joaquim Bezerra',
-                'maria-luiz': 'Maria Luiz da Silva',
-              }
-              return options[selected] || selected
-            }}
-            IconComponent={KeyboardArrowDownIcon}
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderRadius: 2,
-              },
-            }}
-          >
-            <MenuItem value="graca-lima">Graça Lima</MenuItem>
-            <MenuItem value="joaquim-bezerra">Joaquim Bezerra</MenuItem>
-            <MenuItem value="maria-luiz">Maria Luiz da Silva</MenuItem>
-          </Select>
-        </FormControl>
+        <Controller
+          name="dependent"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth size="small" error={!!errors.dependent}>
+              <Select
+                {...field}
+                displayEmpty
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
+                  }
+                  const options: { [key: string]: string } = {
+                    'graca-lima': 'Graça Lima',
+                    'joaquim-bezerra': 'Joaquim Bezerra',
+                    'maria-luiz': 'Maria Luiz da Silva',
+                  }
+                  return options[selected] || selected
+                }}
+                IconComponent={KeyboardArrowDownIcon}
+                sx={{
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderRadius: 2,
+                  },
+                }}
+              >
+                <MenuItem value="graca-lima">Graça Lima</MenuItem>
+                <MenuItem value="joaquim-bezerra">Joaquim Bezerra</MenuItem>
+                <MenuItem value="maria-luiz">Maria Luiz da Silva</MenuItem>
+              </Select>
+              {errors.dependent && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'error.main', mt: 0.5, ml: 1.75 }}
+                >
+                  {errors.dependent.message}
+                </Typography>
+              )}
+            </FormControl>
+          )}
+        />
       </Box>
 
       <Box>
@@ -241,19 +215,26 @@ export const EditMedication: React.FC = () => {
         >
           Médico
         </Typography>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Inserir Nome do Médico"
-          value={formData.doctor}
-          onChange={handleChange('doctor')}
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
+        <Controller
+          name="doctor"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              fullWidth
+              size="small"
+              placeholder="Inserir Nome do Médico"
+              error={!!errors.doctor}
+              helperText={errors.doctor?.message}
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+          )}
         />
       </Box>
 
@@ -269,26 +250,33 @@ export const EditMedication: React.FC = () => {
         >
           Dosagem
         </Typography>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Pesquisar a dosagem"
-          value={formData.dosage}
-          onChange={handleChange('dosage')}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <SearchIcon sx={{ color: 'text.secondary' }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
+        <Controller
+          name="dosage"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              fullWidth
+              size="small"
+              placeholder="Pesquisar a dosagem"
+              error={!!errors.dosage}
+              helperText={errors.dosage?.message}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <SearchIcon sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+          )}
         />
       </Box>
 
@@ -323,113 +311,136 @@ export const EditMedication: React.FC = () => {
               >
                 Até:
               </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="DD/MM/YYYY"
-                value={formData.dateUntil}
-                onChange={handleDateChange}
-                error={
-                  formData.dateUntil.length > 0 &&
-                  formData.dateUntil.length === 10 &&
-                  !validateDate(formData.dateUntil)
-                }
-                helperText={
-                  formData.dateUntil.length > 0 &&
-                  formData.dateUntil.length === 10 &&
-                  !validateDate(formData.dateUntil)
-                    ? 'Data inválida'
-                    : ''
-                }
-                inputProps={{
-                  maxLength: 10,
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <CalendarTodayIcon sx={{ color: 'text.secondary' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  },
-                }}
+              <Controller
+                name="dateUntil"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    size="small"
+                    placeholder="DD/MM/YYYY"
+                    disabled={continuousUse}
+                    error={!!errors.dateUntil}
+                    helperText={errors.dateUntil?.message}
+                    onChange={(e) => {
+                      const formatted = formatDate(e.target.value)
+                      field.onChange(formatted)
+                    }}
+                    inputProps={{
+                      maxLength: 10,
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <CalendarTodayIcon sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      bgcolor: 'background.paper',
+                      borderRadius: 2,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
+                  />
+                )}
               />
             </Box>
             <Box sx={{ mt: 3.5 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.continuousUse}
-                    onChange={handleCheckboxChange}
-                    color="primary"
+              <Controller
+                name="continuousUse"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        {...field}
+                        checked={field.value}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                        }}
+                      >
+                        Uso Contínuo
+                      </Typography>
+                    }
                   />
-                }
-                label={
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                    }}
-                  >
-                    Uso Contínuo
-                  </Typography>
-                }
+                )}
               />
             </Box>
           </Box>
 
-          {times.map((time, index) => (
+          {fields.map((field, index) => (
             <Box
-              key={index}
+              key={field.id}
               sx={{
                 display: 'flex',
                 gap: 1,
                 alignItems: 'center',
               }}
             >
-              <TextField
-                fullWidth
-                size="small"
-                type="time"
-                value={time}
-                onChange={(e) => handleTimeChange(index, e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <AccessTimeIcon sx={{ color: 'text.secondary' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  },
-                }}
+              <Controller
+                name={`times.${index}`}
+                control={control}
+                render={({ field: timeField }) => (
+                  <TextField
+                    {...timeField}
+                    fullWidth
+                    size="small"
+                    type="time"
+                    error={!!errors.times?.[index]}
+                    helperText={errors.times?.[index]?.message}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <AccessTimeIcon sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      bgcolor: 'background.paper',
+                      borderRadius: 2,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
+                  />
+                )}
               />
-              {times.length > 1 && (
+              {fields.length > 1 && (
                 <IconButton
                   onClick={() => handleRemoveTime(index)}
                   size="small"
                   color="error"
+                  type="button"
                 >
                   <CloseIcon color="error" />
                 </IconButton>
               )}
             </Box>
           ))}
+          {errors.times && typeof errors.times.message === 'string' && (
+            <Typography
+              variant="caption"
+              sx={{ color: 'error.main', mt: -1 }}
+            >
+              {errors.times.message}
+            </Typography>
+          )}
 
           <Button
             variant="contained"
             color="primary"
             startIcon={<AddIcon />}
             onClick={handleAddTime}
+            type="button"
             sx={{
               borderRadius: 2,
               py: 1,
@@ -470,20 +481,27 @@ export const EditMedication: React.FC = () => {
         >
           Comentários
         </Typography>
-        <TextField
-          fullWidth
-          multiline
-          rows={4}
-          placeholder="Adicione comentários ou observações"
-          value={formData.comments}
-          onChange={handleChange('comments')}
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
+        <Controller
+          name="comments"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              fullWidth
+              multiline
+              rows={4}
+              placeholder="Adicione comentários ou observações"
+              error={!!errors.comments}
+              helperText={errors.comments?.message}
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+          )}
         />
       </Box>
 
@@ -499,6 +517,7 @@ export const EditMedication: React.FC = () => {
           variant="outlined"
           fullWidth
           onClick={handleCancel}
+          type="button"
           sx={{
             borderRadius: 2,
             py: 1.5,
@@ -517,7 +536,8 @@ export const EditMedication: React.FC = () => {
           variant="contained"
           color="primary"
           fullWidth
-          onClick={handleSave}
+          type="submit"
+          disabled={isSubmitting}
           sx={{
             borderRadius: 2,
             py: 1.5,
@@ -525,7 +545,7 @@ export const EditMedication: React.FC = () => {
             fontSize: { xs: '0.875rem', sm: '0.9375rem' },
           }}
         >
-          Salvar
+          {isSubmitting ? 'Salvando...' : 'Salvar'}
         </Button>
       </Box>
     </Box>
