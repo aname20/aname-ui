@@ -1,24 +1,13 @@
 import * as yup from 'yup'
 
+import moment from 'moment'
+
 const validateDate = (value: string | undefined): boolean => {
-  if (!value || value.length !== 10) return false
-
-  const [day, month, year] = value.split('/').map(Number)
-
-  if (day < 1 || day > 31) return false
-  if (month < 1 || month > 12) return false
-  if (year < 1900 || year > 2099) return false
-
-  const date = new Date(year, month - 1, day)
-  if (
-    date.getDate() !== day ||
-    date.getMonth() !== month - 1 ||
-    date.getFullYear() !== year
-  ) {
+  if (!value) {
     return false
-  }
+  };
 
-  return true
+  return moment(value, 'DD/MM/YYYY', true).isValid()
 }
 
 export const addMedicationSchema = yup.object({
@@ -97,4 +86,6 @@ export interface AddMedicationFormData {
   times: string[]
   comments?: string
 }
+
+
 

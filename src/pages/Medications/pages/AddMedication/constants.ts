@@ -1,5 +1,3 @@
-// Constants for AddMedication
-// This file can be used for default values or configuration if needed
 
 export const defaultMedicationValues = {
   medication: '',
@@ -11,4 +9,6 @@ export const defaultMedicationValues = {
   times: ['08:00'],
   comments: '',
 }
+
+
 
