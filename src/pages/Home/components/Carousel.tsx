@@ -29,6 +29,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     overflow: "hidden",
     borderRadius: "12px",
+    padding: "0 25px",
   },
   carouselSlides: {
     display: "flex",
@@ -48,19 +49,19 @@ const styles: Record<string, React.CSSProperties> = {
     transform: "translateY(-50%)",
     backgroundColor: "rgba(255, 255, 255, 0.7)",
     border: "none",
-    color: "#333",
+    color: "#3375f5",
     fontSize: "28px",
     cursor: "pointer",
-    padding: "4px 12px",
+    padding: "8px",  
     borderRadius: "4px",
     transition: "background-color 0.2s",
     zIndex: 10,
   },
   carouselPrev: {
-    left: "8px",
+    left: "0px",  
   },
   carouselNext: {
-    right: "8px",
+    right: "0px", 
   },
   carouselDots: {
     display: "flex",

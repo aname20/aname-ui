@@ -3,28 +3,33 @@
 import React from "react"
 import { PrivateLayout } from "../../components/layouts/PrivateLayout"
 import { Carousel } from "./components/Carousel"
+import { PersonAdd, People, Folder } from "@mui/icons-material"
+
 
 const styles: Record<string, React.CSSProperties> = {
   mainContent: {
     width: "100%",
     display: "flex",
     flexDirection: "column",
-    gap: 24,
-    padding: "16px",
-    paddingBottom: "80px",
+    gap: 20,
+    padding: "8px",
+    paddingBottom: "-10px",
     margin: "0 auto",
-    maxWidth: "1200px", // Limitar o tamanho máximo
+    maxWidth: "1200px", 
   },
 
   section: {
     marginBottom: "24px",
+    marginTop: "-25px", 
+    borderBottom: "1px solid #3375f5", 
+    paddingBottom: "20px", 
   },
 
   sectionHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "12px",
+    marginBottom: "10px",
     flexWrap: "wrap",
     gap: "8px",
   },
@@ -159,14 +164,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
   },
 
-  bannerLogo: {
-    fontSize: "48px",
-    opacity: 0.8,
-  },
-
   cadastrosGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(500px, 1fr))",
     gap: "12px",
     marginTop: "12px",
   },
@@ -191,6 +191,14 @@ const styles: Record<string, React.CSSProperties> = {
   cadastroIcon: {
     fontSize: "28px",
   },
+
+  iconContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "8px",
+    flexDirection: "column",
+  },
 }
 
 interface MedicationCard {
@@ -210,6 +218,7 @@ interface EventCard {
   person: string
 }
 
+{/* mock simulador de dados */}
 export const Home: React.FC = () => {
   const medications: MedicationCard[] = [
     {
@@ -262,6 +271,58 @@ export const Home: React.FC = () => {
     },
   ]
 
+  const cadastros: MedicationCard[] = [
+    {
+      id: "1",
+      name: "Novo Dependente",
+      dosage: "",
+      frequency: "",
+      times: "",
+      person: "",
+    },
+    {
+      id: "2",
+      name: "Novo Documento",
+      dosage: "",
+      frequency: "",
+      times: "",
+      person: "",
+    },
+    {
+      id: "3",
+      name: "Novo Evento",
+      dosage: "",
+      frequency: "",
+      times: "",
+      person: "",
+    },
+  ]
+
+  const suaArea: EventCard[] = [
+    {
+      id: "1",
+      title: "Dependentes",
+      date: "",
+      time: "",
+      person: "",
+    },
+    {
+      id: "2",
+      title: "Documentos",
+      date: "",
+      time: "",
+      person: "",
+    },
+
+    {
+      id: "3",
+      title: "Agenda",
+      date: "",
+      time: "",
+      person: "",
+    },
+  ]
+
   const medicationItems = medications.map((med) => ({
     id: med.id,
     content: (
@@ -287,6 +348,34 @@ export const Home: React.FC = () => {
         <p style={styles.eventDate}>{evt.date}</p>
         <p style={styles.eventTime}>{evt.time}</p>
         <p style={styles.person}>{evt.person}</p>
+      </div>
+    ),
+  }))
+
+  const cadastroItems = cadastros.map((cad) => ({
+    id: cad.id,
+    content: (
+      <div style={styles.cadastroBtn}>
+        <div style={styles.iconContainer}>
+          <PersonAdd style={styles.cadastroIcon} />
+          <span>{cad.name}</span>
+        </div>
+      </div>
+    ),
+  }))
+
+  const suaAreaItems = suaArea.map((area) => ({
+    id: area.id,
+    content: (
+      <div style={styles.cadastroBtn}>
+        <div style={styles.iconContainer}>
+          {area.title === "Dependentes" ? (
+            <People style={styles.cadastroIcon} />
+          ) : (
+            <Folder style={styles.cadastroIcon} />
+          )}
+          <span>{area.title}</span>
+        </div>
       </div>
     ),
   }))
@@ -332,74 +421,25 @@ export const Home: React.FC = () => {
           <Carousel items={eventItems} showDots={true} />
         </section>
 
+        {/* Cadastros */}
+        <section style={styles.section}>
+          <h2 style={styles.sectionTitle}>Cadastros</h2>
+          <Carousel items={cadastroItems} showDots={true} />
+        </section>
+
+        {/* Sua Área */}
+        <section style={styles.section}>
+          <h2 style={styles.sectionTitle}>Sua Área</h2>
+          <Carousel items={suaAreaItems} showDots={true} />
+        </section>
+
         {/* Banner */}
         <section style={styles.bannerSection}>
           <div style={styles.banner}>
             <div>
-              <p style={styles.bannerDiscount}>ATÉ 70% OFF!</p>
-              <p style={styles.bannerText}>Só no APP</p>
+              <p style={styles.bannerDiscount}>Titulo do banner</p>
+              <p style={styles.bannerText}>Texto se necessário</p>
             </div>
-            <div style={styles.bannerLogo}>🏥</div>
-          </div>
-        </section>
-
-        {/* Cadastros */}
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>Cadastros</h2>
-          <div style={styles.cadastrosGrid}>
-            <button
-              style={styles.cadastroBtn}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 4px 12px rgba(51,117,245,0.1)"
-                e.currentTarget.style.transform = "translateY(-2px)"
-                e.currentTarget.style.borderColor = "#3375f5"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "none"
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.borderColor = "#e0e0e0"
-              }}
-            >
-              <span style={styles.cadastroIcon}>💊</span>
-              <span>Remédios</span>
-            </button>
-
-            <button
-              style={styles.cadastroBtn}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 4px 12px rgba(51,117,245,0.1)"
-                e.currentTarget.style.transform = "translateY(-2px)"
-                e.currentTarget.style.borderColor = "#3375f5"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "none"
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.borderColor = "#e0e0e0"
-              }}
-            >
-              <span style={styles.cadastroIcon}>📅</span>
-              <span>Eventos</span>
-            </button>
-
-            <button
-              style={styles.cadastroBtn}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 4px 12px rgba(51,117,245,0.1)"
-                e.currentTarget.style.transform = "translateY(-2px)"
-                e.currentTarget.style.borderColor = "#3375f5"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "none"
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.borderColor = "#e0e0e0"
-              }}
-            >
-              <span style={styles.cadastroIcon}>👥</span>
-              <span>Dependentes</span>
-            </button>
           </div>
         </section>
       </main>

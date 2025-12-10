@@ -1,4 +1,3 @@
-import { SidebarDrawer } from '@/components/common/SidebarDrawer'
 import { useAuthStore } from '@/stores/authStore'
 import HomeIcon from '@mui/icons-material/Home'
 import MedicationIcon from '@mui/icons-material/Medication'
@@ -15,7 +14,7 @@ import {
   Paper,
   Toolbar,
 } from '@mui/material'
-import React, { useState } from 'react'
+import React from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
 
 interface PrivateLayoutProps {
@@ -27,9 +26,6 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const isLoading = useAuthStore((state) => state.isLoading)
-  const user = useAuthStore((state) => state.user)
-  const logout = useAuthStore((state) => state.logout)
-  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // URL -> índice da aba selecionada
   const currentTab = React.useMemo(() => {
@@ -71,19 +67,9 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
       }}
     >
-      <AppBar 
-        position="fixed" 
-        color="primary" 
-        elevation={0} 
-        sx={{ 
-          maxWidth: '500px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-        }}
-      >
+      <AppBar position="fixed" color="primary" elevation={0}>
         <Toolbar
           sx={{
             minHeight: 56,
@@ -102,13 +88,7 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
               width: 'auto',
             }}
           />
-          <IconButton
-            edge="end"
-            color="inherit"
-            aria-label="menu"
-            size="large"
-            onClick={() => setDrawerOpen(true)}
-          >
+          <IconButton edge="end" color="inherit" aria-label="menu" size="large">
             <MenuIcon />
           </IconButton>
         </Toolbar>
@@ -118,27 +98,14 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
 
       <Box
         component="main"
-        sx={{ 
-          flex: 1, 
-          overflowY: 'auto', 
-          bgcolor: '#f5f5f5',
-          width: '100%',
-          maxWidth: '500px',
-        }}
+        sx={{ flex: 1, overflowY: 'auto', bgcolor: '#f5f5f5' }}
       >
         <Container sx={{ pt: 2, pb: 8 }}>{children}</Container>
       </Box>
 
       <Paper
         elevation={8}
-        sx={{ 
-          position: 'fixed', 
-          bottom: 0, 
-          left: '50%',
-          transform: 'translateX(-50%)',
-          maxWidth: '500px',
-          width: '100%',
-        }}
+        sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}
       >
         <BottomNavigation
           value={currentTab}
@@ -150,18 +117,6 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
           <BottomNavigationAction label="Dependentes" icon={<PeopleIcon />} />
         </BottomNavigation>
       </Paper>
-
-      {/* Drawer Lateral */}
-      <SidebarDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        user={user}
-        onNavigate={navigate}
-        onLogout={() => {
-          logout()
-          navigate('/login')
-        }}
-      />
     </Box>
   )
 }
