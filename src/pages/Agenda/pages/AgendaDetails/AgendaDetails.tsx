@@ -1,0 +1,258 @@
+import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import {
+  Avatar,
+  Box,
+  Button,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Typography
+} from '@mui/material'
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+
+// Mock data - substituir por chamada à API
+const mockAppointment = {
+  id: '1',
+  title: 'Eletrocardiograma',
+  description: 'Exame',
+  date: '20/03',
+  dayOfWeek: 'Quinta',
+  time: '09:00',
+  doctor: {
+    name: 'Dr. Marco Di\'Angelo',
+    specialty: 'Cardiologia Clínica',
+  },
+  dependent: {
+    id: '1',
+    name: 'Graça Lima',
+    age: 35,
+    avatar: '/avatars/graca-lima.jpg',
+  },
+  location: {
+    name: 'AmorSaúde Caragibe',
+    address: 'Rua dos Camaragibes, 123',
+    rating: 5.0,
+    reviews: 230,
+    mapImage: '/maps/amorosaude-caragibe.jpg',
+  },
+  comments: 'Sem comentários',
+  diagnosis: 'Aguardando diagnóstico',
+}
+
+export const AgendaDetails = () => {
+  const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const menuOpen = Boolean(anchorEl)
+
+  // TODO: Buscar dados reais da API usando o id
+  const appointment = mockAppointment
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleMenuClose = () => {
+    setAnchorEl(null)
+  }
+
+  const handleEdit = () => {
+    navigate(`/agenda/${id}/editar`)
+    handleMenuClose()
+  }
+
+  const handleDelete = () => {
+    // TODO: Implementar lógica de exclusão
+    console.log('Excluir agendamento:', id)
+    handleMenuClose()
+  }
+
+  const handleRelateDiagnostic = () => {
+    navigate(`/agenda/${id}/editar`)
+  }
+
+  const handleDependentClick = () => {
+    navigate(`/dependentes/${appointment.dependent.id}`)
+  }
+
+  return (
+    <Box sx={{ pb: 2 }}>
+      {/* Título e Menu */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 0.5 }}>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="h5" sx={{ color: '#0033DA', fontWeight: 700, mb: 0.5 }}>
+            {appointment.title}
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#757575', mb: 2 }}>
+            {appointment.description}
+          </Typography>
+        </Box>
+        <IconButton
+          onClick={handleMenuOpen}
+          size="small"
+          sx={{ color: '#0033DA' }}
+        >
+          <MoreVertIcon />
+        </IconButton>
+      </Box>
+
+      {/* Menu de Opções */}
+      <Menu
+        anchorEl={anchorEl}
+        open={menuOpen}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={handleEdit}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Editar</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleDelete}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Excluir</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Data e Dependente */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        {/* Data e Hora */}
+        <Box
+          sx={{
+            border: '2px solid #0033DA',
+            borderRadius: 3,
+            p: 2,
+            minWidth: 80,
+            textAlign: 'center',
+            bgcolor: 'white',
+          }}
+        >
+          <Typography variant="h4" sx={{ color: '#0033DA', fontWeight: 700, lineHeight: 1 }}>
+            {appointment.date}
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#0033DA', fontWeight: 600 }}>
+            {appointment.dayOfWeek}
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#0033DA' }}>
+            {appointment.time}
+          </Typography>
+        </Box>
+
+        {/* Informações do Dependente */}
+        <Box
+          onClick={handleDependentClick}
+          sx={{
+            border: '1px solid #E0E0E0',
+            borderRadius: 3,
+            p: 2,
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            bgcolor: 'white',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              borderColor: '#0033DA',
+              bgcolor: '#F8F9FF',
+            },
+          }}
+        >
+          <Avatar
+            src={appointment.dependent.avatar}
+            alt={appointment.dependent.name}
+            sx={{ width: 56, height: 56 }}
+          />
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+              {appointment.dependent.name}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#757575' }}>
+              {appointment.dependent.age} anos
+            </Typography>
+          </Box>
+          <Typography sx={{ color: '#0033DA', fontSize: '2rem', lineHeight: 1 }}>›</Typography>
+        </Box>
+      </Box>
+
+      {/* Médico e Especialidade */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        {/* Médico */}
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
+            Médico
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
+            {appointment.doctor.name}
+          </Typography>
+        </Box>
+
+        {/* Especialidade */}
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
+            Especialidade
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
+            {appointment.doctor.specialty}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Comentários */}
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
+          Comentários
+        </Typography>
+        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
+          {appointment.comments}
+        </Typography>
+      </Box>
+
+      {/* Diagnóstico */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
+          Diagnóstico
+        </Typography>
+        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
+          {appointment.diagnosis}
+        </Typography>
+      </Box>
+
+      {/* Botão Relatar Diagnóstico */}
+      <Button
+        fullWidth
+        variant="contained"
+        onClick={handleRelateDiagnostic}
+        sx={{
+          bgcolor: '#456CE8',
+          textTransform: 'none',
+          py: 1.5,
+          fontSize: '1rem',
+          fontWeight: 500,
+          borderRadius: 2,
+          '&:hover': {
+            bgcolor: '#3557c9',
+          },
+        }}
+      >
+        Relatar Diagnóstico
+      </Button>
+    </Box>
+  )
+}
+

@@ -2,7 +2,7 @@ import { SidebarDrawer } from '@/components/common/SidebarDrawer'
 import { useAuthStore } from '@/stores/authStore'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import HomeIcon from '@mui/icons-material/Home'
-import MedicationIcon from '@mui/icons-material/Medication'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import MenuIcon from '@mui/icons-material/Menu'
 import PeopleIcon from '@mui/icons-material/People'
 import {
@@ -36,16 +36,16 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ title, children })
 
   // URL -> índice da aba selecionada
   const currentTab = React.useMemo(() => {
-    if (location.pathname.startsWith('/medications')) return 1
-    if (location.pathname.startsWith('/settings')) return 2
+    if (location.pathname.startsWith('/agenda')) return 1
+    if (location.pathname.startsWith('/dependentes')) return 2
     return 0 // "/" ou "/home"
   }, [location.pathname])
 
   // clique na aba -> navega para rota
   const handleChangeTab = (_: React.SyntheticEvent, value: number) => {
     if (value === 0) navigate('/home')
-    if (value === 1) navigate('/medications')
-    if (value === 2) navigate('/settings')
+    if (value === 1) navigate('/agenda')
+    if (value === 2) navigate('/dependentes')
   }
 
   if (isLoading) {
@@ -167,7 +167,7 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ title, children })
           sx={{ height: 56 }}
         >
           <BottomNavigationAction label="Home" icon={<HomeIcon />} />
-          <BottomNavigationAction label="Agenda" icon={<MedicationIcon />} />
+          <BottomNavigationAction label="Agenda" icon={<CalendarMonthIcon />} />
           <BottomNavigationAction label="Dependentes" icon={<PeopleIcon />} />
         </BottomNavigation>
       </Paper>

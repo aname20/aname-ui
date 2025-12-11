@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router'
 
 interface Appointment {
   id: string
@@ -97,6 +98,7 @@ const mockData: AppointmentGroup[] = [
 ]
 
 export const AgendaList = () => {
+  const navigate = useNavigate()
   const [tabValue, setTabValue] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -168,6 +170,7 @@ export const AgendaList = () => {
         />
         <Button
           variant="contained"
+          onClick={() => navigate('/agenda/novo')}
           sx={{
             bgcolor: '#456CE8',
             textTransform: 'none',
@@ -245,6 +248,7 @@ export const AgendaList = () => {
                     }}
                   >
                     <CardActionArea
+                      onClick={() => navigate(`/agenda/${appointment.id}`)}
                       sx={{
                         p: 2,
                         display: 'flex',
