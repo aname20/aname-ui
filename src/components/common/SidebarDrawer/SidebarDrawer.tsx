@@ -225,7 +225,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
             <Typography  sx={{ fontSize: '10px' }}>
               Entre em contato
             </Typography>
-
+          
           </Button>
 
           <Button
