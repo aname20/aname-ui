@@ -1,5 +1,7 @@
+import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
+import LocalPhoneIcon from '@mui/icons-material/LocalPhone'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import {
   Avatar,
@@ -10,26 +12,49 @@ import {
   ListItemText,
   Menu,
   MenuItem,
-  Typography,
+  Typography
 } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+
+// Função para formatar telefone
+const formatPhoneNumber = (value: string): string => {
+  // Remove tudo que não é número
+  const numbers = value.replace(/\D/g, '')
+  
+  // Limita a 11 dígitos
+  const limited = numbers.slice(0, 11)
+  
+  if (limited.length <= 10) {
+    // Formato: (00) 0000-0000
+    return limited
+      .replace(/^(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+  } else {
+    // Formato: (00) 00000-0000
+    return limited
+      .replace(/^(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+  }
+}
 
 // Mock data - substituir por chamada à API
 const mockDependent = {
   id: '1',
   name: 'Graça Lima',
   age: 35,
-  birthDate: '15/05/1990',
-  cpf: '123.456.789-00',
-  relationship: 'Cônjuge',
-  gender: 'Feminino',
-  phone: '(11) 98765-4321',
-  email: 'graca.lima@email.com',
-  address: 'Rua das Flores, 123, Centro, São Paulo',
-  healthInsurance: 'Unimed',
-  observations: 'Alergia a dipirona',
-  avatar: '/avatars/graca-lima.jpg',
+  susCode: '999999999999',
+  avatar: 'https://i.pravatar.cc/150?img=5',
+  emergencyContacts: [
+    { id: '1', name: 'Raquel', phone: '8199677-8855' },
+    { id: '2', name: 'João', phone: '8199677-8855' },
+  ],
+  conditions: ['Artrite', 'Artrose', 'Esclerodermia', 'Aklameia', 'Padre non mea'],
+  allergies: ['Pedalém', 'Niene', 'Glipema', 'Cannedel', 'Fechar de Mar', 'Pista'],
+  caregivers: [
+    { id: '1', name: 'Katielly', avatar: 'https://i.pravatar.cc/150?img=5' },
+    { id: '2', name: 'Diego', avatar: 'https://i.pravatar.cc/150?img=12' },
+  ],
 }
 
 export const DependentDetails = () => {
@@ -60,40 +85,15 @@ export const DependentDetails = () => {
     handleMenuClose()
   }
 
+  const handleCallContact = (phone: string) => {
+    window.open(`tel:${phone}`, '_blank')
+  }
+
   return (
     <Box sx={{ pb: 2 }}>
-      {/* Avatar e Menu */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-          <Avatar
-            src={dependent.avatar}
-            alt={dependent.name}
-            sx={{ width: 80, height: 80 }}
-          />
-          <Box>
-            <Typography variant="h5" sx={{ color: '#0033DA', fontWeight: 700, mb: 0.5 }}>
-              {dependent.name}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#757575', mb: 1 }}>
-              {dependent.age} anos
-            </Typography>
-            <Chip
-              label={dependent.relationship}
-              size="small"
-              sx={{
-                bgcolor: '#E3F2FD',
-                color: '#1976D2',
-                fontWeight: 500,
-                fontSize: '0.75rem',
-              }}
-            />
-          </Box>
-        </Box>
-        <IconButton
-          onClick={handleMenuOpen}
-          size="small"
-          sx={{ color: '#0033DA' }}
-        >
+      {/* Menu de 3 pontos */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <IconButton onClick={handleMenuOpen} size="small">
           <MoreVertIcon />
         </IconButton>
       </Box>
@@ -126,93 +126,198 @@ export const DependentDetails = () => {
         </MenuItem>
       </Menu>
 
-      {/* Informações Pessoais */}
-      <Typography variant="h6" sx={{ color: '#0033DA', fontWeight: 600, mb: 2 }}>
-        Informações Pessoais
-      </Typography>
+      {/* Avatar e Informações Básicas */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+        <Avatar
+          src={dependent.avatar}
+          alt={dependent.name}
+          sx={{ width: 100, height: 100, mb: 2 }}
+        />
+        <Typography variant="h6" sx={{ color: '#456CE8', fontWeight: 600, mb: 0.5 }}>
+          {dependent.name} ({dependent.age} anos)
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#757575', mb: 1 }}>
+          SUS: {dependent.susCode}
+        </Typography>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          Data de Nascimento
+        {/* Contatos de Emergência - Links clicáveis */}
+        <Typography variant="body2" sx={{ color: '#757575', fontWeight: 600, mb: 0.5 }}>
+          Contatos de Emergência
         </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {dependent.birthDate}
-        </Typography>
+        {dependent.emergencyContacts.map((contact) => (
+          <Box
+            key={contact.id}
+            onClick={() => handleCallContact(contact.phone)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              cursor: 'pointer',
+              color: '#456CE8',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            <LocalPhoneIcon sx={{ fontSize: 16 }} />
+            <Typography variant="body2">
+              {contact.name}: {formatPhoneNumber(contact.phone)}
+            </Typography>
+          </Box>
+        ))}
       </Box>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          CPF
+      {/* Condições de Saúde */}
+      <Box
+        sx={{
+          border: '1px solid #E0E0E0',
+          borderRadius: 3,
+          p: 2,
+          mb: 2,
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{
+            fontStyle: 'italic',
+            color: '#757575',
+            mb: 1.5,
+            fontSize: '0.85rem',
+          }}
+        >
+          Condições de Saúde
         </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {dependent.cpf}
-        </Typography>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          {dependent.conditions.map((condition, index) => (
+            <Chip
+              key={index}
+              label={condition}
+              sx={{
+                bgcolor: '#E8EEF9',
+                color: '#456CE8',
+                fontWeight: 500,
+                fontSize: '0.75rem',
+                border: '1px solid #456CE8',
+              }}
+            />
+          ))}
+        </Box>
       </Box>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          Gênero
+      {/* Alergias e Restrições Alimentares */}
+      <Box
+        sx={{
+          border: '1px solid #E0E0E0',
+          borderRadius: 3,
+          p: 2,
+          mb: 2,
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{
+            fontStyle: 'italic',
+            color: '#757575',
+            mb: 1.5,
+            fontSize: '0.85rem',
+          }}
+        >
+          Alergias e Restrições Alimentares
         </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {dependent.gender}
-        </Typography>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          {dependent.allergies.map((allergy, index) => (
+            <Chip
+              key={index}
+              label={allergy}
+              sx={{
+                bgcolor: '#E8EEF9',
+                color: '#456CE8',
+                fontWeight: 500,
+                fontSize: '0.75rem',
+                border: '1px solid #456CE8',
+              }}
+            />
+          ))}
+        </Box>
       </Box>
 
-      {/* Contato */}
-      <Typography variant="h6" sx={{ color: '#0033DA', fontWeight: 600, mb: 2, mt: 3 }}>
-        Contato
-      </Typography>
-
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          Telefone
+      {/* Cuidadores */}
+      <Box
+        sx={{
+          border: '1px solid #E0E0E0',
+          borderRadius: 3,
+          p: 2,
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{
+            fontStyle: 'italic',
+            color: '#757575',
+            mb: 1.5,
+            fontSize: '0.85rem',
+          }}
+        >
+          Cuidadores
         </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {dependent.phone}
-        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          {dependent.caregivers.map((caregiver) => (
+            <Box
+              key={caregiver.id}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
+              <Avatar
+                src={caregiver.avatar}
+                sx={{
+                  width: 60,
+                  height: 60,
+                  bgcolor: '#456CE8',
+                }}
+              >
+                {caregiver.name.charAt(0)}
+              </Avatar>
+              <Typography
+                variant="caption"
+                sx={{
+                  mt: 0.5,
+                  bgcolor: '#456CE8',
+                  color: 'white',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 2,
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                }}
+              >
+                {caregiver.name}
+              </Typography>
+            </Box>
+          ))}
+          
+          {/* Botão Adicionar Cuidador */}
+          <IconButton
+            onClick={() => navigate(`/dependentes/${id}/editar`)}
+            sx={{
+              bgcolor: '#456CE8',
+              color: 'white',
+              width: 60,
+              height: 60,
+              '&:hover': {
+                bgcolor: '#3557c9',
+              },
+            }}
+          >
+            <AddIcon />
+          </IconButton>
+        </Box>
       </Box>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          E-mail
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {dependent.email}
-        </Typography>
-      </Box>
-
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          Endereço
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {dependent.address}
-        </Typography>
-      </Box>
-
-      {/* Saúde */}
-      <Typography variant="h6" sx={{ color: '#0033DA', fontWeight: 600, mb: 2, mt: 3 }}>
-        Informações de Saúde
-      </Typography>
-
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          Plano de Saúde
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {dependent.healthInsurance}
-        </Typography>
-      </Box>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          Observações
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {dependent.observations}
-        </Typography>
-      </Box>
+   
     </Box>
   )
 }
-
