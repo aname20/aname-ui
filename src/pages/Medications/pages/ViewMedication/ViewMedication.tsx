@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   Box,
   Typography,
@@ -28,6 +28,7 @@ export const ViewMedication: React.FC = () => {
   const queryClient = useQueryClient()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [skipFetch, setSkipFetch] = useState(false)
   const open = Boolean(anchorEl)
 
   type MappedMedication = {
@@ -41,23 +42,14 @@ export const ViewMedication: React.FC = () => {
     times: { time: string; day: string }[]
   }
 
-  const { data: prescription, isLoading, isError, refetch } = useQuery({
+  const { data: prescription, isLoading, isError } = useQuery({
     queryKey: ['prescriptions', id],
     queryFn: () => medicationService.getPrescriptionDetails(id || ''),
-    enabled: !!id,
+    enabled: !!id && !skipFetch,
     staleTime: 5 * 60 * 1000,
   })
 
-  useEffect(() => {
-    console.log('refetching prescription', id)
-
-    if (id) {
-      console.log('refetching prescription', id)
-      refetch()
-    }
-  }, [id, refetch])
-
-  const medication = useMemo<MappedMedication | null>(() => {
+  const medication = useMemo<MappedMedication | null>((): MappedMedication | null =>{
     if (!prescription) return null
 
     return {
@@ -71,7 +63,7 @@ export const ViewMedication: React.FC = () => {
       times:
         prescription.schedules?.map((item) => ({
           time: item.time,
-          day: '', // API não fornece dia específico; exibimos somente o horário
+          day: '',
         })) ?? [],
     }
   }, [prescription])
@@ -107,29 +99,31 @@ export const ViewMedication: React.FC = () => {
     setIsDeleteModalOpen(true)
   }
 
-  const { mutate: deletePrescription } = useMutation({
+  const { mutate: deletePrescription, isPending: isDeleting } = useMutation({
     mutationFn: () => medicationService.removePrescription(id || ''),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
-      queryClient.removeQueries({ queryKey: ['prescriptions', id] })
       navigate('/medications')
     },
     onError: (error) => {
       console.error('Erro ao excluir remédio', error)
+      setSkipFetch(false)
     },
     onSettled: () => {
       setIsDeleteModalOpen(false)
     },
   })
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!id) {
       console.error('ID do remédio não encontrado para exclusão')
       setIsDeleteModalOpen(false)
       return
     }
 
+    setSkipFetch(true)
     deletePrescription()
+
   }
 
   const handleCancelDelete = () => {
@@ -414,7 +408,7 @@ export const ViewMedication: React.FC = () => {
               gap: 1,
             }}
           >
-            {medication.times.map((item: { time: string; day: string }, index: number) => (
+            {medication.times.map((item, index: number) => (
               <MedicationTimeItem key={index} time={item.time} day={item.day} />
             ))}
           </Box>
@@ -423,6 +417,7 @@ export const ViewMedication: React.FC = () => {
 
       <ModalConfirmation
         open={isDeleteModalOpen}
+        loading={isDeleting}
         onClose={handleCancelDelete}
         title="Você tem certeza que deseja excluir esse remédio?"
         subtitle="Essa ação não poderá ser desfeita."

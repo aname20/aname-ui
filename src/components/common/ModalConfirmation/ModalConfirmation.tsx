@@ -6,6 +6,7 @@ import {
   Box,
   Button,
 } from '@mui/material'
+import CircularProgress from '@mui/material/CircularProgress'
 
 export interface ModalConfirmationProps {
   open: boolean
@@ -18,6 +19,7 @@ export interface ModalConfirmationProps {
   cancelLabel?: string
   onConfirm?: () => void
   onCancel?: () => void
+  loading?: boolean
 }
 
 export const ModalConfirmation: React.FC<ModalConfirmationProps> = ({
@@ -31,8 +33,10 @@ export const ModalConfirmation: React.FC<ModalConfirmationProps> = ({
   cancelLabel = 'Cancelar',
   onConfirm,
   onCancel,
+  loading = false,
 }) => {
   const handleConfirm = () => {
+    if (loading) return
     if (onConfirm) {
       onConfirm()
     }
@@ -99,6 +103,7 @@ export const ModalConfirmation: React.FC<ModalConfirmationProps> = ({
               <Button
                 variant="contained"
                 onClick={handleConfirm}
+                disabled={loading}
                 sx={{
                   bgcolor: '#456CE8',
                   color: '#FFFFFF',
@@ -113,7 +118,11 @@ export const ModalConfirmation: React.FC<ModalConfirmationProps> = ({
                   },
                 }}
               >
-                {confirmLabel}
+                {loading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  confirmLabel
+                )}
               </Button>
             )}
 
