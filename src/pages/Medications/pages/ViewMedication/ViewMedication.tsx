@@ -1,27 +1,27 @@
-import React, { useMemo, useState } from 'react'
+import { ModalConfirmation } from '@/components/common/ModalConfirmation'
+import { medicationService } from '@/services/medications'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import ShareIcon from '@mui/icons-material/Share'
 import {
+  Avatar,
   Box,
-  Typography,
   Card,
   CardContent,
-  Avatar,
+  Divider,
   IconButton,
   Menu,
   MenuItem,
-  Divider,
   Tooltip,
+  Typography,
 } from '@mui/material'
-import MoreVertIcon from '@mui/icons-material/MoreVert'
-import EditIcon from '@mui/icons-material/Edit'
-import ShareIcon from '@mui/icons-material/Share'
-import DeleteIcon from '@mui/icons-material/Delete'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import { useNavigate, useParams } from 'react-router'
-import { ModalConfirmation } from '@/components/common/ModalConfirmation'
-import { MedicationTimeItem } from './components/MedicationTimeItem'
-import { medicationService } from '@/services/medications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import React, { useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { MedicationTimeItem } from './components/MedicationTimeItem'
 
 export const ViewMedication: React.FC = () => {
   const navigate = useNavigate()
@@ -79,7 +79,7 @@ export const ViewMedication: React.FC = () => {
 
   const handleEdit = () => {
     handleMenuClose()
-    navigate(`/medications/edit/${id}`)
+    navigate(`/remedios/${id}/editar`)
   }
 
   const handleShare = () => {
@@ -104,7 +104,7 @@ export const ViewMedication: React.FC = () => {
     mutationFn: () => medicationService.removePrescription(id || ''),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
-      navigate('/medications')
+      navigate('/remedios')
     },
     onError: (error) => {
       console.error('Erro ao excluir remédio', error)
@@ -184,7 +184,7 @@ export const ViewMedication: React.FC = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <IconButton
-              onClick={() => navigate('/medications')}
+              onClick={() => navigate('/remedios')}
               sx={{ color: 'text.primary', ml: -1 }}
               aria-label="Voltar para lista de medicamentos"
             >

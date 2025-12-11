@@ -14,7 +14,7 @@ export const MedicationItem: React.FC<MedicationItemProps> = ({ id, name, dosage
   return (
     <Card
       key={name}
-      onClick={() => navigate(`/medications/${id}`)}
+      onClick={() => navigate(`/remedios/${id}`)}
       sx={{
         bgcolor: 'background.paper',
         borderRadius: 2,
