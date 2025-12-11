@@ -1,8 +1,8 @@
 import { SidebarDrawer } from '@/components/common/SidebarDrawer'
 import { useAuthStore } from '@/stores/authStore'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import HomeIcon from '@mui/icons-material/Home'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import HomeIcon from '@mui/icons-material/Home'
 import MenuIcon from '@mui/icons-material/Menu'
 import PeopleIcon from '@mui/icons-material/People'
 import {
@@ -164,11 +164,38 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ title, children })
         <BottomNavigation
           value={currentTab}
           onChange={handleChangeTab}
-          sx={{ height: 56 }}
+          showLabels
+          sx={{ 
+            height: 56,
+          }}
         >
-          <BottomNavigationAction label="Home" icon={<HomeIcon />} />
-          <BottomNavigationAction label="Agenda" icon={<CalendarMonthIcon />} />
-          <BottomNavigationAction label="Dependentes" icon={<PeopleIcon />} />
+          <BottomNavigationAction 
+            label="Home" 
+            icon={<HomeIcon />}
+            sx={{
+              '& .MuiBottomNavigationAction-label': {
+                marginTop: '4px',
+              },
+            }}
+          />
+          <BottomNavigationAction 
+            label="Agenda" 
+            icon={<CalendarMonthIcon />}
+            sx={{
+              '& .MuiBottomNavigationAction-label': {
+                marginTop: '4px',
+              },
+            }}
+          />
+          <BottomNavigationAction 
+            label="Dependentes" 
+            icon={<PeopleIcon />}
+            sx={{
+              '& .MuiBottomNavigationAction-label': {
+                marginTop: '4px',
+              },
+            }}
+          />
         </BottomNavigation>
       </Paper>
 
