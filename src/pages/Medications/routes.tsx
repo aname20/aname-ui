@@ -32,7 +32,7 @@ export const medicationRoutes = [
   />,
   <Route
     key="medications-edit"
-    path="/medications/edit/:medicationId"
+    path="/medications/edit/:id"
     element={
       <PrivateLayout>
         <EditMedication />
@@ -41,7 +41,7 @@ export const medicationRoutes = [
   />,
   <Route
     key="medications-view"
-    path="/medications/view/:medicationId"
+    path="/medications/:id"
     element={
       <PrivateLayout>
         <ViewMedication />

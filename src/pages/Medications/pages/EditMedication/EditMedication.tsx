@@ -79,11 +79,11 @@ export const EditMedication: React.FC = () => {
   const onSubmit = async (data: EditMedicationFormData) => {
     console.log('Atualizando:', data)
 
-    navigate(`/medications/view/${id}`)
+    navigate(`/medications/${id}`)
   }
 
   const handleCancel = () => {
-    navigate(`/medications/view/${id}`)
+    navigate(`/medications/${id}`)
   }
 
   const handleAddTime = () => {

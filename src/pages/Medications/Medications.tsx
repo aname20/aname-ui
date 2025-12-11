@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   Box,
   TextField,
@@ -8,23 +8,33 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import { useNavigate } from 'react-router'
 import { MedicationItem } from './components/MedicationItem'
-
-const medications = [
-  { name: 'Clonazepam', dosage: '500mg', person: 'Graça Lima' },
-  { name: 'Prostaline', dosage: '1000mg', person: 'Joaquim Bezerra' },
-  { name: 'Diamicron', dosage: '60mg', person: 'Maria Luiz da Silva' },
-  { name: 'Stanglit', dosage: '30mg', person: 'Graça Lima' },
-  { name: 'Vitamina B12', dosage: '20ml', person: 'Graça Lima' },
-  { name: 'Loratadina', dosage: '50mg', person: 'Graça Lima' },
-]
+import { useQuery } from '@tanstack/react-query'
+import { medicationService } from '@/services/medications'
+import type { Prescription } from '@/types/medication'
 
 export const Medications: React.FC = () => {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
 
-  const filteredMedications = medications.filter((med) =>
-    med.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const { data: prescriptions = [], isLoading, isError } = useQuery({
+    queryKey: ['prescriptions'],
+    queryFn: () => medicationService.getPrescriptions(),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const filteredMedications = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim()
+    if (!term) return prescriptions
+
+    return prescriptions.filter((prescription: Prescription) => {
+      const medicationName = prescription.medication?.name?.toLowerCase() || ''
+      const dependentName = prescription.dependent?.name?.toLowerCase() || ''
+      return (
+        medicationName.includes(term) ||
+        dependentName.includes(term)
+      )
+    })
+  }, [prescriptions, searchTerm])
 
   return (
     <Box
@@ -47,6 +57,18 @@ export const Medications: React.FC = () => {
           gap: 2,
         }}
       >
+        {isLoading && (
+          <Box sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
+            Carregando prescrições...
+          </Box>
+        )}
+
+        {isError && (
+          <Box sx={{ color: 'error.main', fontSize: '0.9rem' }}>
+            Erro ao carregar prescrições.
+          </Box>
+        )}
+
         <Box
           sx={{
             display: 'flex',
@@ -101,12 +123,15 @@ export const Medications: React.FC = () => {
             gap: 1.5,
           }}
         >
-          {filteredMedications.map((med) => {
-            const medicationId = med.name.toLowerCase().replace(/\s+/g, '-')
-            return (
-              <MedicationItem key={medicationId} name={med.name} dosage={med.dosage} person={med.person} />
-            )
-          })}
+          {filteredMedications.map((prescription) => (
+            <MedicationItem
+              key={prescription.id}
+              id={prescription.id}
+              name={prescription.medication?.name || 'Medicamento'}
+              dosage={prescription.dosage || 'Sem dosagem'}
+              person={prescription.dependent?.name || 'Paciente'}
+            />
+          ))}
         </Box>
       </Box>
     </Box>

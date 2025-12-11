@@ -42,6 +42,7 @@ export class BaseService {
 
   protected async delete<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await api.delete<T>(`${this.baseURL}${endpoint}`, config)
+
     return response.data
   }
 }

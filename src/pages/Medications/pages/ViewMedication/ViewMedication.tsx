@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   Box,
   Typography,
@@ -19,44 +19,62 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useNavigate, useParams } from 'react-router'
 import { ModalConfirmation } from '@/components/common/ModalConfirmation'
 import { MedicationTimeItem } from './components/MedicationTimeItem'
-
-const medicationData: { [key: string]: {
-  name: string;
-  dosage: string;
-  person: string;
-  personAge: number;
-  doctor: string;
-  comments: string;
-  continuousUse: boolean;
-  times: { time: string; day: string }[];
-} } = {
-  'clonazepam': {
-    name: 'Clonazepam',
-    dosage: '5mg',
-    person: 'Graça Lima',
-    personAge: 35,
-    doctor: "Dr. Marco Di'Angelo",
-    comments: 'Sem comentários',
-    continuousUse: true,
-    times: [
-      { time: '08:00', day: 'Dom' },
-      { time: '08:00', day: 'Seg' },
-      { time: '08:00', day: 'Ter' },
-      { time: '08:00', day: 'Qua' },
-      { time: '08:00', day: 'Qui' },
-      { time: '08:00', day: 'Sex' },
-    ],
-  },
-}
+import { medicationService } from '@/services/medications'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export const ViewMedication: React.FC = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
+  const queryClient = useQueryClient()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const open = Boolean(anchorEl)
 
-  const medication = medicationData[id || 'clonazepam'] || medicationData['clonazepam']
+  type MappedMedication = {
+    name: string
+    dosage: string
+    person: string
+    personAge?: number
+    doctor: string
+    comments: string
+    continuousUse: boolean
+    times: { time: string; day: string }[]
+  }
+
+  const { data: prescription, isLoading, isError, refetch } = useQuery({
+    queryKey: ['prescriptions', id],
+    queryFn: () => medicationService.getPrescriptionDetails(id || ''),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  useEffect(() => {
+    console.log('refetching prescription', id)
+
+    if (id) {
+      console.log('refetching prescription', id)
+      refetch()
+    }
+  }, [id, refetch])
+
+  const medication = useMemo<MappedMedication | null>(() => {
+    if (!prescription) return null
+
+    return {
+      name: prescription.medication?.name ?? 'Medicamento',
+      dosage: prescription.dosage ?? 'Sem dosagem',
+      person: prescription.dependent?.name ?? 'Paciente',
+      personAge: prescription.dependent?.age ?? undefined,
+      doctor: prescription.doctorName ?? 'Profissional de saúde',
+      comments: prescription.notes ?? 'Sem comentários',
+      continuousUse: prescription.type === 'CONTINUOUS',
+      times:
+        prescription.schedules?.map((item) => ({
+          time: item.time,
+          day: '', // API não fornece dia específico; exibimos somente o horário
+        })) ?? [],
+    }
+  }, [prescription])
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -74,6 +92,8 @@ export const ViewMedication: React.FC = () => {
   const handleShare = () => {
     handleMenuClose()
 
+    if (!medication) return
+
     if (navigator.share) {
       navigator.share({
         title: medication.name,
@@ -87,10 +107,29 @@ export const ViewMedication: React.FC = () => {
     setIsDeleteModalOpen(true)
   }
 
+  const { mutate: deletePrescription } = useMutation({
+    mutationFn: () => medicationService.removePrescription(id || ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
+      queryClient.removeQueries({ queryKey: ['prescriptions', id] })
+      navigate('/medications')
+    },
+    onError: (error) => {
+      console.error('Erro ao excluir remédio', error)
+    },
+    onSettled: () => {
+      setIsDeleteModalOpen(false)
+    },
+  })
+
   const handleConfirmDelete = () => {
-    // Lógica para excluir
-    navigate('/medications')
-    setIsDeleteModalOpen(false)
+    if (!id) {
+      console.error('ID do remédio não encontrado para exclusão')
+      setIsDeleteModalOpen(false)
+      return
+    }
+
+    deletePrescription()
   }
 
   const handleCancelDelete = () => {
@@ -99,6 +138,26 @@ export const ViewMedication: React.FC = () => {
 
   const handlePersonClick = () => {
     // Navegar para detalhes da pessoa
+  }
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+        <Typography variant="body1" color="text.secondary">
+          Carregando prescrição...
+        </Typography>
+      </Box>
+    )
+  }
+
+  if (isError || !medication) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+        <Typography variant="body1" color="error.main">
+          Não foi possível carregar os dados da prescrição.
+        </Typography>
+      </Box>
+    )
   }
 
   return (
