@@ -1,9 +1,13 @@
 import { PrivateLayout } from '@/components/layouts/PrivateLayout'
 import { PublicLayout } from '@/components/layouts/PublicLayout'
+import { agendaRoutes } from '@/pages/Agenda/pages/routes'
 import { Login } from '@/pages/Auth/pages/Login'
 import { Register } from '@/pages/Auth/pages/Register'
-import { Home } from '@/pages/Home'
 import { medicationRoutes } from '@/pages/Medications/routes'
+import { dependentsRoutes } from '@/pages/Dependents/pages/routes'
+import { documentsRoutes } from '@/pages/Documents/pages/routes'
+import { homeRoutes } from '@/pages/Home/pages/routes'
+import { profileRoutes } from '@/pages/Profile'
 import { Settings } from '@/pages/Settings'
 import React from 'react'
 import { Navigate, Route, Routes } from 'react-router'
@@ -33,17 +37,18 @@ export const AppRoutes: React.FC = () => {
       />
 
       {/* Rotas Privadas */}
-      <Route
-        path="/home"
-        element={
-          <PrivateLayout>
-            <Home />
-          </PrivateLayout>
-        }
-      />
+      {homeRoutes}
 
       {/* Rotas de Medications */}
       {medicationRoutes}
+
+      {agendaRoutes}
+
+      {documentsRoutes}
+
+      {dependentsRoutes}
+
+      {profileRoutes}
 
       <Route
         path="/settings"
