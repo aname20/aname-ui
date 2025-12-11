@@ -1,0 +1,2 @@
+export { AgendaDetails } from './AgendaDetails';
+

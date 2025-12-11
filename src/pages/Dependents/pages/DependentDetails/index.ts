@@ -1,0 +1,2 @@
+export { DependentDetails } from './DependentDetails'
+

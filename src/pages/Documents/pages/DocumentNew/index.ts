@@ -1,0 +1,2 @@
+export { DocumentNew } from './DocumentNew';
+
