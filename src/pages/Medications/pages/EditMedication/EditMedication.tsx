@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -11,6 +11,7 @@ import {
   Checkbox,
   FormControlLabel,
   IconButton,
+  CircularProgress,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
@@ -22,47 +23,75 @@ import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate, useParams } from 'react-router'
 import { useForm, Controller, useFieldArray, useWatch, type Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   editMedicationSchema,
   type EditMedicationFormData,
 } from './schema/schema'
 import { formatDate } from '@/utils/date'
-import { medicationData } from './constants'
-
+import { medicationService } from '@/services/medications'
+import { mockDependents } from '@/stores/prescriptionStore'
 
 export const EditMedication: React.FC = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { id } = useParams<{ id: string }>()
 
-  const initialData = medicationData[id || 'clonazepam'] || {
+  // Busca os dados da prescrição existente
+  const { data: prescription, isLoading: isLoadingPrescription } = useQuery({
+    queryKey: ['prescriptions', id],
+    queryFn: () => medicationService.getPrescriptionDetails(id || ''),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Valores padrão para o formulário
+  const defaultFormValues: EditMedicationFormData = {
     medication: '',
     dependent: '',
     doctor: '',
     dosage: '',
-    dateUntil: '',
+    dateUntil: undefined,
     continuousUse: true,
     times: ['08:00'],
-    comments: '',
+    comments: undefined,
   }
 
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<EditMedicationFormData>({
-
     resolver: yupResolver(editMedicationSchema) as unknown as Resolver<EditMedicationFormData, unknown, EditMedicationFormData>,
-    defaultValues: {
-      medication: initialData.medication,
-      dependent: initialData.dependent,
-      doctor: initialData.doctor,
-      dosage: initialData.dosage,
-      dateUntil: initialData.dateUntil || undefined,
-      continuousUse: initialData.continuousUse,
-      times: initialData.times || ['08:00'],
-      comments: initialData.comments || undefined,
-    },
+    defaultValues: defaultFormValues,
   })
+
+  // Atualiza o formulário quando os dados da prescrição carregam
+  useEffect(() => {
+    if (prescription) {
+      // Converte a data de ISO para DD/MM/YYYY
+      let dateUntil: string | undefined
+      if (prescription.endDate) {
+        const date = new Date(prescription.endDate)
+        const day = String(date.getDate()).padStart(2, '0')
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const year = date.getFullYear()
+        dateUntil = `${day}/${month}/${year}`
+      }
+
+      reset({
+        medication: prescription.medication?.name || '',
+        dependent: prescription.dependentId || '',
+        doctor: prescription.doctorName || '',
+        dosage: prescription.dosage || '',
+        dateUntil,
+        continuousUse: prescription.type === 'CONTINUOUS',
+        times: prescription.schedules?.map((s) => s.time) || ['08:00'],
+        comments: prescription.notes || undefined,
+      })
+    }
+  }, [prescription, reset])
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -73,13 +102,25 @@ export const EditMedication: React.FC = () => {
   const continuousUse = useWatch({
     control,
     name: 'continuousUse',
-    defaultValue: initialData.continuousUse,
+    defaultValue: true,
+  })
+
+  // Mutation para atualizar prescrição
+  const { mutate: updatePrescription } = useMutation({
+    mutationFn: (data: EditMedicationFormData) =>
+      medicationService.updatePrescription(id || '', data),
+    onSuccess: () => {
+      // Invalida o cache para atualizar a listagem e os detalhes
+      queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
+      navigate(`/medications/${id}`)
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar prescrição:', error)
+    },
   })
 
   const onSubmit = async (data: EditMedicationFormData) => {
-    console.log('Atualizando:', data)
-
-    navigate(`/medications/${id}`)
+    updatePrescription(data)
   }
 
   const handleCancel = () => {
@@ -94,6 +135,22 @@ export const EditMedication: React.FC = () => {
     if (fields.length > 1) {
       remove(index)
     }
+  }
+
+  // Exibe loading enquanto carrega os dados
+  if (isLoadingPrescription) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '40vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
   }
 
   return (
@@ -170,12 +227,9 @@ export const EditMedication: React.FC = () => {
                   if (!selected) {
                     return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
                   }
-                  const options: { [key: string]: string } = {
-                    'graca-lima': 'Graça Lima',
-                    'joaquim-bezerra': 'Joaquim Bezerra',
-                    'maria-luiz': 'Maria Luiz da Silva',
-                  }
-                  return options[selected] || selected
+                  // Busca o nome do dependente no mock
+                  const dependent = mockDependents.find(d => d.id === selected)
+                  return dependent?.name || selected
                 }}
                 IconComponent={KeyboardArrowDownIcon}
                 sx={{
@@ -186,9 +240,11 @@ export const EditMedication: React.FC = () => {
                   },
                 }}
               >
-                <MenuItem value="graca-lima">Graça Lima</MenuItem>
-                <MenuItem value="joaquim-bezerra">Joaquim Bezerra</MenuItem>
-                <MenuItem value="maria-luiz">Maria Luiz da Silva</MenuItem>
+                {mockDependents.map((dep) => (
+                  <MenuItem key={dep.id} value={dep.id}>
+                    {dep.name}
+                  </MenuItem>
+                ))}
               </Select>
               {errors.dependent && (
                 <Typography
@@ -552,4 +608,3 @@ export const EditMedication: React.FC = () => {
     </Box>
   )
 }
-

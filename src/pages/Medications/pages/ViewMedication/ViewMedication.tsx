@@ -16,6 +16,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import ShareIcon from '@mui/icons-material/Share'
 import DeleteIcon from '@mui/icons-material/Delete'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useNavigate, useParams } from 'react-router'
 import { ModalConfirmation } from '@/components/common/ModalConfirmation'
 import { MedicationTimeItem } from './components/MedicationTimeItem'
@@ -181,16 +182,25 @@ export const ViewMedication: React.FC = () => {
             justifyContent: 'space-between',
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 600,
-              fontSize: { xs: '1.25rem', sm: '1.5rem' },
-              color: 'text.primary',
-            }}
-          >
-            {medication.name}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton
+              onClick={() => navigate('/medications')}
+              sx={{ color: 'text.primary', ml: -1 }}
+              aria-label="Voltar para lista de medicamentos"
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                color: 'text.primary',
+              }}
+            >
+              {medication.name}
+            </Typography>
+          </Box>
           <IconButton
             onClick={handleMenuClick}
             sx={{ color: 'text.primary' }}

@@ -22,15 +22,19 @@ import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate } from 'react-router'
 import { useForm, Controller, useFieldArray, useWatch, type Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   addMedicationSchema,
   type AddMedicationFormData,
 } from './schema/schema'
 import { formatDate } from '@/utils/date'
 import { defaultMedicationValues } from './constants'
+import { medicationService } from '@/services/medications'
+import { mockDependents } from '@/stores/prescriptionStore'
 
 export const AddMedication: React.FC = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const {
     control,
@@ -62,10 +66,21 @@ export const AddMedication: React.FC = () => {
     defaultValue: defaultMedicationValues.continuousUse,
   })
 
+  // Mutation para criar prescrição
+  const { mutate: createPrescription } = useMutation({
+    mutationFn: medicationService.createPrescription.bind(medicationService),
+    onSuccess: () => {
+      // Invalida o cache para atualizar a listagem
+      queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
+      navigate('/medications')
+    },
+    onError: (error) => {
+      console.error('Erro ao criar prescrição:', error)
+    },
+  })
+
   const onSubmit = async (data: AddMedicationFormData) => {
-    console.log('Salvando:', data)
-    // Aqui você pode fazer a chamada à API
-    navigate('/medications')
+    createPrescription(data)
   }
 
   const handleCancel = () => {
@@ -156,12 +171,9 @@ export const AddMedication: React.FC = () => {
                   if (!selected) {
                     return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
                   }
-                  const options: { [key: string]: string } = {
-                    'graca-lima': 'Graça Lima',
-                    'joaquim-bezerra': 'Joaquim Bezerra',
-                    'maria-luiz': 'Maria Luiz da Silva',
-                  }
-                  return options[selected] || selected
+                  // Busca o nome do dependente no mock
+                  const dependent = mockDependents.find(d => d.id === selected)
+                  return dependent?.name || selected
                 }}
                 IconComponent={KeyboardArrowDownIcon}
                 sx={{
@@ -172,9 +184,11 @@ export const AddMedication: React.FC = () => {
                   },
                 }}
               >
-                <MenuItem value="graca-lima">Graça Lima</MenuItem>
-                <MenuItem value="joaquim-bezerra">Joaquim Bezerra</MenuItem>
-                <MenuItem value="maria-luiz">Maria Luiz da Silva</MenuItem>
+                {mockDependents.map((dep) => (
+                  <MenuItem key={dep.id} value={dep.id}>
+                    {dep.name}
+                  </MenuItem>
+                ))}
               </Select>
               {errors.dependent && (
                 <Typography
@@ -309,7 +323,6 @@ export const AddMedication: React.FC = () => {
                     disabled={continuousUse}
                     error={!!errors.dateUntil}
                     helperText={errors.dateUntil?.message}
-                    value={field.value || ''}
                     onChange={(e) => {
                       const formatted = formatDate(e.target.value)
                       field.onChange(formatted)
@@ -538,4 +551,3 @@ export const AddMedication: React.FC = () => {
     </Box>
   )
 }
-
