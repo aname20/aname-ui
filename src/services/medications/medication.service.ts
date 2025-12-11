@@ -1,4 +1,4 @@
-import type { Prescription } from '@/types/medication'
+import type { Medication, Prescription } from '@/types/medication'
 import { BaseService } from '../api/base.service'
 
 class MedicationService extends BaseService {
@@ -16,6 +16,14 @@ class MedicationService extends BaseService {
 
   async getPrescriptionDetails(prescriptionId: string): Promise<Prescription> {
     return this.get<Prescription>(`/${prescriptionId}`)
+  }
+
+  async createPrescription(prescription: Prescription): Promise<Prescription> {
+    return this.post<Prescription>('/', prescription)
+  }
+
+  async getMedications(): Promise<Medication[]> {
+    return this.get<Medication[]>('/')
   }
 
 };
