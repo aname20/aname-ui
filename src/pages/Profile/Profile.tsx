@@ -2,27 +2,10 @@
 
 import React from "react"
 import { ArrowBack, MoreVert, Phone, Add } from "@mui/icons-material"
+import { useMediaQuery, useTheme } from "@mui/material"
 import { PrivateLayout } from "../../components/layouts/PrivateLayout"
 
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    width: "100%",
-    margin: "0 auto",
-    background: "#F9FAFB",
-    minHeight: "100vh",
-    paddingBottom: 40,
-  },
-
-  container: {
-    width: "100%",
-    maxWidth: 1200,
-    margin: "0 auto",
-    padding: "12px",
-    display: "flex",
-    flexDirection: "column",
-    gap: 20,
-  },
-
+const baseStyles: Record<string, React.CSSProperties> = {
   header: {
     display: "flex",
     alignItems: "center",
@@ -38,28 +21,12 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
   },
 
-  card: {
-    background: "#FFFFFF",
-    border: "1px solid #E5E7EB",
-    borderRadius: 12,
-    padding: 20,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-    width: "100%",
-  },
-
   profileTop: {
     display: "flex",
     gap: 20,
     alignItems: "center",
     flexWrap: "wrap",
-  },
-
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "3px solid #D9D0C7",
+    marginBottom: 24,
   },
 
   nameBlock: {
@@ -71,51 +38,51 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   name: {
-  color: "#456CE8",
-  fontSize: 20,
-  fontWeight: 700,
-  margin: 0,
-},
+    color: "#456CE8",
+    fontSize: 20,
+    fontWeight: 700,
+    margin: 0,
+  },
 
-age: {
-  color: "#AFC5FF", // antes #93C5FD
-  fontSize: 14,
-  margin: 0,
-},
+  age: {
+    color: "#AFC5FF",
+    fontSize: 14,
+    margin: 0,
+  },
 
-contactChip: {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 8,
-  backgroundColor: "#E8EEFF", // antes #EFF6FF
-  border: "1.5px solid #456CE8", // antes #3B82F6
-  color: "#456CE8", // antes #3B82F6
-  padding: "6px 12px",
-  borderRadius: 999,
-  fontSize: 14,
-  fontWeight: 600,
-},
+  contactChip: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#E8EEFF",
+    border: "1.5px solid #456CE8",
+    color: "#456CE8",
+    padding: "6px 12px",
+    borderRadius: 999,
+    fontSize: 14,
+    fontWeight: 600,
+  },
 
-phoneIconCircle: {
-  width: 22,
-  height: 22,
-  borderRadius: "50%",
-  border: "1.5px solid #456CE8", // antes #3B82F6
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-},
+  phoneIconCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: "50%",
+    border: "1.5px solid #456CE8",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
-depNameBadge: {
-  marginTop: 4,
-  display: "inline-block",
-  background: "#456CE8",
-  color: "#fff",
-  padding: "4px 10px",
-  borderRadius: 12,
-  fontSize: 13,
-  fontWeight: 600,
-},
+  depNameBadge: {
+    marginTop: 4,
+    display: "inline-block",
+    background: "#456CE8",
+    color: "#fff",
+    padding: "4px 10px",
+    borderRadius: 12,
+    fontSize: 13,
+    fontWeight: 600,
+  },
 
   addButton: {
     width: 80,
@@ -129,10 +96,54 @@ depNameBadge: {
     cursor: "pointer",
   },
 
-  // small utility
   smallText: {
     fontSize: 13,
     color: "#6B7280",
+  },
+
+  section: {
+    marginTop: 24,
+    marginBottom: 16,
+    width: "100%",
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 600,
+    marginBottom: 12,
+    color: "#000",
+    textAlign: "center",
+  },
+
+  contactsRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 12,
+    justifyContent: "center",
+  },
+
+  dependentCard: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  depAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "2px solid #D9D0C7",
+  },
+
+  menuButton: {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 }
 
@@ -175,12 +186,69 @@ const mockProfile: ProfileData = {
 
 export const Profile: React.FC = () => {
   const profile = mockProfile
+  const theme = useTheme()
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
+
+  // Estilos dinâmicos baseados no breakpoint
+  const styles: Record<string, React.CSSProperties> = {
+    ...baseStyles,
+    container: {
+      width: "100%",
+      maxWidth: isDesktop ? 900 : 1200,
+      margin: "0 auto",
+      padding: isDesktop ? "32px 24px" : "12px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 20,
+      alignItems: "center",
+    },
+    card: {
+      background: "#FFFFFF",
+      border: "1px solid #E5E7EB",
+      borderRadius: 12,
+      padding: isDesktop ? "40px" : "20px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+      width: "100%",
+      maxWidth: isDesktop ? 800 : "100%",
+    },
+    avatar: {
+      width: isDesktop ? 120 : 100,
+      height: isDesktop ? 120 : 100,
+      borderRadius: "50%",
+      objectFit: "cover",
+      border: "3px solid #D9D0C7",
+    },
+    dependentsGrid: {
+      display: "grid",
+      gridTemplateColumns: isDesktop ? "repeat(auto-fit, minmax(120px, 1fr))" : "repeat(auto-fill, minmax(100px, 1fr))",
+      gap: 16,
+      marginTop: 12,
+      justifyContent: isDesktop ? "center" : "flex-start",
+      maxWidth: isDesktop ? 600 : "100%",
+      margin: isDesktop ? "12px auto 0" : "12px 0 0",
+    },
+    profileTop: {
+      ...baseStyles.profileTop,
+      justifyContent: isDesktop ? "center" : "flex-start",
+    },
+    section: {
+      ...baseStyles.section,
+    },
+    sectionTitle: {
+      ...baseStyles.sectionTitle,
+      textAlign: isDesktop ? "center" : "left",
+    },
+    contactsRow: {
+      ...baseStyles.contactsRow,
+      justifyContent: isDesktop ? "center" : "flex-start",
+    },
+  }
 
   return (
-    <PrivateLayout>
-      <div style={styles.page}>
-        <div style={styles.container}>
-          {/* header */}
+    <PrivateLayout title="Meu Perfil">
+      <div style={styles.container}>
+        {/* header - apenas no mobile */}
+        {!isDesktop && (
           <div style={styles.header}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <button style={{ background: "none", border: "none", cursor: "pointer" }}>
@@ -193,9 +261,10 @@ export const Profile: React.FC = () => {
               <MoreVert />
             </button>
           </div>
+        )}
 
-          {/* card */}
-          <div style={styles.card}>
+        {/* card */}
+        <div style={styles.card}>
             <div style={styles.profileTop}>
               <img src={profile.avatar || "/placeholder.svg"} alt={profile.name} style={styles.avatar} />
 
@@ -244,7 +313,6 @@ export const Profile: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
     </PrivateLayout>
   )
 }

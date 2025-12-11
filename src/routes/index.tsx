@@ -5,6 +5,7 @@ import { Login } from '@/pages/Auth/pages/Login'
 import { Register } from '@/pages/Auth/pages/Register'
 import { Home } from '@/pages/Home'
 import { Medications } from '@/pages/Medications'
+import { Profile } from '@/pages/Profile'
 import { Settings } from '@/pages/Settings'
 import React from 'react'
 import { Navigate, Route, Routes } from 'react-router'
@@ -52,6 +53,10 @@ export const AppRoutes: React.FC = () => {
       />
 
       {agendaRoutes}
+      <Route
+        path="/profile"
+        element={<Profile />}
+      />
 
       <Route
         path="/settings"
