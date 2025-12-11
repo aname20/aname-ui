@@ -508,7 +508,7 @@ export const EditMedication: React.FC = () => {
             Adicionar Outro Horário +
           </Button>
 
-          <Button
+          {/* <Button
             variant="outlined"
             startIcon={<NotificationsIcon />}
             sx={{
@@ -522,7 +522,7 @@ export const EditMedication: React.FC = () => {
             }}
           >
             Adicionar Lembrete
-          </Button>
+          </Button> */}
         </Box>
       </Box>
 

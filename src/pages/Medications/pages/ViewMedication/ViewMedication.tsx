@@ -131,8 +131,8 @@ export const ViewMedication: React.FC = () => {
     setIsDeleteModalOpen(false)
   }
 
-  const handlePersonClick = () => {
-    // Navegar para detalhes da pessoa
+  const handlePersonClick = (id: number) => {
+    navigate(`/dependentes/${id}`)
   }
 
   if (isLoading) {
@@ -254,7 +254,6 @@ export const ViewMedication: React.FC = () => {
               boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
             },
           }}
-          onClick={handlePersonClick}
         >
           <CardContent
             sx={{
@@ -264,6 +263,7 @@ export const ViewMedication: React.FC = () => {
               alignItems: 'center',
               gap: 2,
             }}
+            onClick={() => handlePersonClick(1)}
           >
             <Avatar
               sx={{
