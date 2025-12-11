@@ -1,6 +1,8 @@
+import { SidebarDrawer } from '@/components/common/SidebarDrawer'
 import { useAuthStore } from '@/stores/authStore'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import HomeIcon from '@mui/icons-material/Home'
-import MedicationIcon from '@mui/icons-material/Medication'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import MenuIcon from '@mui/icons-material/Menu'
 import PeopleIcon from '@mui/icons-material/People'
 import {
@@ -13,32 +15,37 @@ import {
   IconButton,
   Paper,
   Toolbar,
+  Typography,
 } from '@mui/material'
-import React from 'react'
+import React, { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
 
 interface PrivateLayoutProps {
   children: React.ReactNode
+  title?: string;
 }
 
-export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
+export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ title, children }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const isLoading = useAuthStore((state) => state.isLoading)
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // URL -> índice da aba selecionada
   const currentTab = React.useMemo(() => {
-    if (location.pathname.startsWith('/medications')) return 1
-    if (location.pathname.startsWith('/settings')) return 2
+    if (location.pathname.startsWith('/agenda')) return 1
+    if (location.pathname.startsWith('/dependentes')) return 2
     return 0 // "/" ou "/home"
   }, [location.pathname])
 
   // clique na aba -> navega para rota
   const handleChangeTab = (_: React.SyntheticEvent, value: number) => {
     if (value === 0) navigate('/home')
-    if (value === 1) navigate('/medications')
-    if (value === 2) navigate('/settings')
+    if (value === 1) navigate('/agenda')
+    if (value === 2) navigate('/dependentes')
   }
 
   if (isLoading) {
@@ -67,9 +74,19 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
       }}
     >
-      <AppBar position="fixed" color="primary" elevation={0}>
+      <AppBar 
+        position="fixed" 
+        color="primary" 
+        elevation={0} 
+        sx={{ 
+          maxWidth: '500px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        }}
+      >
         <Toolbar
           sx={{
             minHeight: 56,
@@ -79,7 +96,25 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
             alignItems: 'center',
           }}
         >
-          <Box
+         {title?
+         <>
+           <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="voltar"
+            size="large"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+         
+          <Typography variant="body1" sx={{ fontSize: "20px" }}>
+            {title}
+          </Typography>
+         
+         </>
+         
+         :  <Box
             component="img"
             src="/logo.svg"
             alt="AnAme"
@@ -87,8 +122,14 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
               height: 40,
               width: 'auto',
             }}
-          />
-          <IconButton edge="end" color="inherit" aria-label="menu" size="large">
+          />}
+          <IconButton
+            edge="end"
+            color="inherit"
+            aria-label="menu"
+            size="large"
+            onClick={() => setDrawerOpen(true)}
+          >
             <MenuIcon />
           </IconButton>
         </Toolbar>
@@ -98,14 +139,27 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
 
       <Box
         component="main"
-        sx={{ flex: 1, overflowY: 'auto', bgcolor: '#f5f5f5' }}
+        sx={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          bgcolor: '#f5f5f5',
+          width: '100%',
+          maxWidth: '500px',
+        }}
       >
         <Container sx={{ pt: 2, pb: 8 }}>{children}</Container>
       </Box>
 
       <Paper
         elevation={8}
-        sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}
+        sx={{ 
+          position: 'fixed', 
+          bottom: 0, 
+          left: '50%',
+          transform: 'translateX(-50%)',
+          maxWidth: '500px',
+          width: '100%',
+        }}
       >
         <BottomNavigation
           value={currentTab}
@@ -113,10 +167,22 @@ export const PrivateLayout: React.FC<PrivateLayoutProps> = ({ children }) => {
           sx={{ height: 56 }}
         >
           <BottomNavigationAction label="Home" icon={<HomeIcon />} />
-          <BottomNavigationAction label="Agenda" icon={<MedicationIcon />} />
+          <BottomNavigationAction label="Agenda" icon={<CalendarMonthIcon />} />
           <BottomNavigationAction label="Dependentes" icon={<PeopleIcon />} />
         </BottomNavigation>
       </Paper>
+
+      {/* Drawer Lateral */}
+      <SidebarDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        user={user}
+        onNavigate={navigate}
+        onLogout={() => {
+          logout()
+          navigate('/login')
+        }}
+      />
     </Box>
   )
 }
