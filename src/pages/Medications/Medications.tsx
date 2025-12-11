@@ -1,78 +1,139 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   Box,
-  Typography,
   TextField,
-  List,
-  ListItemButton,
-  ListItemText,
-  useTheme,
-  useMediaQuery,
+  InputAdornment,
+  Button,
 } from '@mui/material'
-
-const medications = [
-  { name: 'Clonazepam', info: '0,5 mg - Noite' },
-  { name: 'Prolazine', info: '10 mg - Manhã' },
-  { name: 'Vitamina B12', info: '1x ao dia' },
-]
+import SearchIcon from '@mui/icons-material/Search'
+import { useNavigate } from 'react-router'
+import { MedicationItem } from './components/MedicationItem'
+import { useQuery } from '@tanstack/react-query'
+import { medicationService } from '@/services/medications'
+import type { Prescription } from '@/types/medication'
 
 export const Medications: React.FC = () => {
-  const theme = useTheme()
-  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'))
+  const navigate = useNavigate()
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const { data: prescriptions = [], isLoading, isError } = useQuery({
+    queryKey: ['prescriptions'],
+    queryFn: () => medicationService.getPrescriptions(),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const filteredMedications = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim()
+    if (!term) return prescriptions
+
+    return prescriptions.filter((prescription: Prescription) => {
+      const medicationName = prescription.medication?.name?.toLowerCase() || ''
+      const dependentName = prescription.dependent?.name?.toLowerCase() || ''
+      return (
+        medicationName.includes(term) ||
+        dependentName.includes(term)
+      )
+    })
+  }, [prescriptions, searchTerm])
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Typography
-        variant="h6"
-        sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}
-      >
-        Remédios
-      </Typography>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        bgcolor: '#f5f5f5',
+      }}
+    >
 
-      <TextField
-        size="small"
-        fullWidth
-        placeholder="Buscar remédio"
+      <Box
         sx={{
-          bgcolor: 'background.paper',
-        }}
-      />
-
-      <List
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 2,
+          flex: 1,
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3 },
+          pb: { xs: 10, sm: 10 },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
         }}
       >
-        {medications.map((med) => (
-          <ListItemButton
-            key={med.name}
+        {isLoading && (
+          <Box sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
+            Carregando prescrições...
+          </Box>
+        )}
+
+        {isError && (
+          <Box sx={{ color: 'error.main', fontSize: '0.9rem' }}>
+            Erro ao carregar prescrições.
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            alignItems: 'center',
+            flexDirection: { xs: 'column', sm: 'row' },
+          }}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Pesquisar"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
             sx={{
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              py: { xs: 1, sm: 1.5 },
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+            }}
+          />
+
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/medications/add')}
+            sx={{
+              borderRadius: 2,
+              px: { xs: 2, sm: 3 },
+              py: 1,
+              whiteSpace: 'nowrap',
+              minWidth: { xs: '100%', sm: 'auto' },
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' },
             }}
           >
-            <ListItemText
-              primary={med.name}
-              secondary={med.info}
-              primaryTypographyProps={{
-                fontSize: { xs: '0.95rem', sm: '1rem' },
-              }}
-              secondaryTypographyProps={{
-                fontSize: { xs: '0.8rem', sm: '0.85rem' },
-              }}
-            />
-          </ListItemButton>
-        ))}
-      </List>
+            Adicionar Novo
+          </Button>
+        </Box>
 
-      {isSmUp && (
-        <Typography variant="body2" color="text.secondary">
-          Em telas maiores você pode dividir em 2 colunas (lista + detalhes).
-        </Typography>
-      )}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.5,
+          }}
+        >
+          {filteredMedications.map((prescription) => (
+            <MedicationItem
+              key={prescription.id}
+              id={prescription.id}
+              name={prescription.medication?.name || 'Medicamento'}
+              dosage={prescription.dosage || 'Sem dosagem'}
+              person={prescription.dependent?.name || 'Paciente'}
+            />
+          ))}
+        </Box>
+      </Box>
     </Box>
   )
 }
-
