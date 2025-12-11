@@ -1,0 +1,2 @@
+export { ProfileDetails } from './ProfileDetails'
+
