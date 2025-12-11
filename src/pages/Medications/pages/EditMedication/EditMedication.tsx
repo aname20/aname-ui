@@ -323,6 +323,7 @@ export const EditMedication: React.FC = () => {
                     disabled={continuousUse}
                     error={!!errors.dateUntil}
                     helperText={errors.dateUntil?.message}
+                    value={field.value || ''}
                     onChange={(e) => {
                       const formatted = formatDate(e.target.value)
                       field.onChange(formatted)
