@@ -1,0 +1,2 @@
+export { DependentNew } from './DependentNew'
+

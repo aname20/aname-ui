@@ -1,9 +1,10 @@
 import { PrivateLayout } from '@/components/layouts/PrivateLayout'
 import { PublicLayout } from '@/components/layouts/PublicLayout'
 import { agendaRoutes } from '@/pages/Agenda/pages/routes'
-import { documentsRoutes } from '@/pages/Documents/pages/routes'
 import { Login } from '@/pages/Auth/pages/Login'
 import { Register } from '@/pages/Auth/pages/Register'
+import { dependentsRoutes } from '@/pages/Dependents/pages/routes'
+import { documentsRoutes } from '@/pages/Documents/pages/routes'
 import { homeRoutes } from '@/pages/Home/pages/routes'
 import { Medications } from '@/pages/Medications'
 import { Settings } from '@/pages/Settings'
@@ -49,6 +50,8 @@ export const AppRoutes: React.FC = () => {
       {agendaRoutes}
 
       {documentsRoutes}
+
+      {dependentsRoutes}
 
       <Route
         path="/settings"
