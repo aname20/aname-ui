@@ -35,17 +35,15 @@ export const DependentNew = () => {
       await createDependent.mutateAsync({
         name: data.name,
         age: data.age,
-        susCode: data.susCode || undefined,
-        conditions: data.conditions?.length > 0 ? data.conditions : undefined,
-        allergies: data.allergies?.length > 0 ? data.allergies : undefined,
-        caregiverIds: data.caregiverIds?.length > 0 ? data.caregiverIds : undefined,
-        emergencyContacts: data.emergencyContacts?.length > 0 
-          ? data.emergencyContacts.map((contact: { name: string; phone: string; kinship?: string }) => ({
-              name: contact.name,
-              phone: contact.phone,
-              kinship: contact.kinship || undefined,
-            }))
-          : undefined,
+        susCode: data.susCode,
+        conditions: data.conditions,
+        allergies: data.allergies,
+        caregiverIds: data.caregiverIds,
+        emergencyContacts: data.emergencyContacts?.map((contact: { name: string; phone: string; kinship?: string }) => ({
+          name: contact.name,
+          phone: contact.phone,
+          kinship: contact.kinship,
+        })),
       })
       navigate('/dependentes')
     } catch (error) {
