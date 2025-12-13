@@ -112,7 +112,7 @@ export const EditMedication: React.FC = () => {
     onSuccess: () => {
       // Invalida o cache para atualizar a listagem e os detalhes
       queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
-      navigate(`/medications/${id}`)
+      navigate(`/remedios/${id}`)
     },
     onError: (error) => {
       console.error('Erro ao atualizar prescrição:', error)
@@ -124,7 +124,7 @@ export const EditMedication: React.FC = () => {
   }
 
   const handleCancel = () => {
-    navigate(`/medications/${id}`)
+    navigate(`/remedios/${id}`)
   }
 
   const handleAddTime = () => {

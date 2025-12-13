@@ -1,36 +1,36 @@
-import React from 'react'
-import {
-  Box,
-  Typography,
-  TextField,
-  InputAdornment,
-  Button,
-  FormControl,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-} from '@mui/material'
-import SearchIcon from '@mui/icons-material/Search'
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import { medicationService } from '@/services/medications'
+import { mockDependents } from '@/stores/prescriptionStore'
+import { formatDate } from '@/utils/date'
+import { yupResolver } from '@hookform/resolvers/yup'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import AddIcon from '@mui/icons-material/Add'
-import NotificationsIcon from '@mui/icons-material/Notifications'
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import CloseIcon from '@mui/icons-material/Close'
-import { useNavigate } from 'react-router'
-import { useForm, Controller, useFieldArray, useWatch, type Resolver } from 'react-hook-form'
-import { yupResolver } from '@hookform/resolvers/yup'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import NotificationsIcon from '@mui/icons-material/Notifications'
+import SearchIcon from '@mui/icons-material/Search'
+import {
+  Box,
+  Button,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import React from 'react'
+import { Controller, useFieldArray, useForm, useWatch, type Resolver } from 'react-hook-form'
+import { useNavigate } from 'react-router'
+import { defaultMedicationValues } from './constants'
 import {
   addMedicationSchema,
   type AddMedicationFormData,
 } from './schema/schema'
-import { formatDate } from '@/utils/date'
-import { defaultMedicationValues } from './constants'
-import { medicationService } from '@/services/medications'
-import { mockDependents } from '@/stores/prescriptionStore'
 
 export const AddMedication: React.FC = () => {
   const navigate = useNavigate()
@@ -72,7 +72,7 @@ export const AddMedication: React.FC = () => {
     onSuccess: () => {
       // Invalida o cache para atualizar a listagem
       queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
-      navigate('/medications')
+      navigate('/remedios')
     },
     onError: (error) => {
       console.error('Erro ao criar prescrição:', error)
@@ -84,7 +84,7 @@ export const AddMedication: React.FC = () => {
   }
 
   const handleCancel = () => {
-    navigate('/medications')
+    navigate('/remedios')
   }
 
   const handleAddTime = () => {

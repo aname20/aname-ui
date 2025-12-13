@@ -59,7 +59,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
       icon: MedicationIcon,
       label: 'Remédios',
       description: 'Remédios salvos no sistema',
-      path: '/medications',
+      path: '/remedios',
     },
     {
       icon: CalendarTodayIcon,

@@ -1,16 +1,16 @@
-import React, { useMemo, useState } from 'react'
-import {
-  Box,
-  TextField,
-  InputAdornment,
-  Button,
-} from '@mui/material'
-import SearchIcon from '@mui/icons-material/Search'
-import { useNavigate } from 'react-router'
-import { MedicationItem } from './components/MedicationItem'
-import { useQuery } from '@tanstack/react-query'
 import { medicationService } from '@/services/medications'
 import type { Prescription } from '@/types/medication'
+import SearchIcon from '@mui/icons-material/Search'
+import {
+    Box,
+    Button,
+    InputAdornment,
+    TextField,
+} from '@mui/material'
+import { useQuery } from '@tanstack/react-query'
+import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { MedicationItem } from './components/MedicationItem'
 
 export const Medications: React.FC = () => {
   const navigate = useNavigate()
@@ -102,7 +102,7 @@ export const Medications: React.FC = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => navigate('/medications/add')}
+            onClick={() => navigate('/remedios/novo')}
             sx={{
               borderRadius: 2,
               px: { xs: 2, sm: 3 },
