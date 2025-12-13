@@ -1,34 +1,50 @@
 import { DependentForms } from '@/pages/Dependents/components/DependentForms'
+import { useCreateDependent } from '@/services/dependents'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
-import { dependentNewSchema, type DependentNewFormData } from './schemas/dependentNew.schema'
+import { dependentNewSchema } from './schemas/dependentNew.schema'
 
 export const DependentNew = () => {
   const navigate = useNavigate()
+  const createDependent = useCreateDependent()
 
   const {
     control,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm({
-    resolver: yupResolver(dependentNewSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: yupResolver(dependentNewSchema) as any,
     defaultValues: {
       name: '',
-      age: '' as any,
+      age: undefined as number | undefined,
       susCode: '',
-      avatar: null,
-      conditions: [],
-      allergies: [],
-      caregivers: [],
-      emergencyContacts: [],
+      avatar: null as File | null,
+      conditions: [] as string[],
+      allergies: [] as string[],
+      caregiverIds: [] as string[],
+      emergencyContacts: [] as { name: string; phone: string; kinship?: string }[],
     },
   })
 
-  const onSubmit = async (data: DependentNewFormData) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onSubmit = async (data: any) => {
     try {
-      // TODO: Implementar chamada à API
-      console.log('Dados do formulário:', data)
+      await createDependent.mutateAsync({
+        name: data.name,
+        age: data.age,
+        susCode: data.susCode,
+        conditions: data.conditions,
+        allergies: data.allergies,
+        caregiverIds: data.caregiverIds,
+        emergencyContacts: data.emergencyContacts?.map((contact: { name: string; phone: string; kinship?: string }) => ({
+          name: contact.name,
+          phone: contact.phone,
+          kinship: contact.kinship,
+        })),
+      })
       navigate('/dependentes')
     } catch (error) {
       console.error('Erro ao salvar dependente:', error)
@@ -44,9 +60,11 @@ export const DependentNew = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       control={control as any}
       errors={errors}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setValue={setValue as any}
       onSubmit={handleSubmit(onSubmit)}
       onCancel={handleCancel}
+      isSubmitting={createDependent.isPending}
     />
   )
 }
-
