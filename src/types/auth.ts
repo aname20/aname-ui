@@ -1,10 +1,12 @@
+export type UserRole = 'CAREGIVER' | 'FAMILY'
+
 export interface User {
   id: string
   name: string
   email: string
   phone?: string
   avatar?: string
-  role: 'admin' | 'caregiver' | 'user'
+  role: UserRole
 }
 
 export interface AuthTokens {
@@ -22,6 +24,7 @@ export interface RegisterData {
   email: string
   password: string
   phone?: string
+  role: UserRole
 }
 
 export interface AuthState {
@@ -30,4 +33,3 @@ export interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
 }
-

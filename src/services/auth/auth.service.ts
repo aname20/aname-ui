@@ -3,7 +3,12 @@ import { BaseService } from '../api/base.service'
 
 interface LoginResponse {
   user: User
-  tokens: AuthTokens
+  accessToken: string
+}
+
+interface SignupResponse {
+  user: User
+  accessToken: string
 }
 
 class AuthService extends BaseService {
@@ -15,8 +20,8 @@ class AuthService extends BaseService {
     return this.post<LoginResponse>('/login', credentials)
   }
 
-  async register(data: RegisterData): Promise<LoginResponse> {
-    return this.post<LoginResponse>('/register', data)
+  async signup(data: RegisterData): Promise<SignupResponse> {
+    return this.post<SignupResponse>('/signup', data)
   }
 
   async logout(): Promise<void> {
@@ -49,4 +54,3 @@ class AuthService extends BaseService {
 }
 
 export const authService = new AuthService()
-

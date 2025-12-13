@@ -1,4 +1,5 @@
 import type { LoginCredentials, RegisterData, User } from '@/types/auth'
+import { authService } from '@/services/auth/auth.service'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -22,19 +23,12 @@ export const useAuthStore = create<AuthStore>()(
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true })
         try {
-          // TODO: Substituir por chamada real à API
-          // const { user: userData, tokens } = await authService.login(credentials)
+          const { user, accessToken } = await authService.login(credentials)
 
-          // Simulação temporária
-          const mockUser: User = {
-            id: '1',
-            name: 'Test User',
-            email: credentials.email,
-            role: 'caregiver',
-          }
+          localStorage.setItem('auth_token', accessToken)
 
           set({
-            user: mockUser,
+            user,
             isAuthenticated: true,
             isLoading: false,
           })
@@ -47,20 +41,12 @@ export const useAuthStore = create<AuthStore>()(
       register: async (data: RegisterData) => {
         set({ isLoading: true })
         try {
-          // TODO: Substituir por chamada real à API
-          // const { user: userData, tokens } = await authService.register(data)
+          const { user, accessToken } = await authService.signup(data)
 
-          // Simulação temporária
-          const mockUser: User = {
-            id: Date.now().toString(),
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            role: 'user',
-          }
+          localStorage.setItem('auth_token', accessToken)
 
           set({
-            user: mockUser,
+            user,
             isAuthenticated: true,
             isLoading: false,
           })
@@ -72,24 +58,27 @@ export const useAuthStore = create<AuthStore>()(
 
       logout: async () => {
         try {
-          // TODO: Chamar endpoint de logout da API
-          // await authService.logout()
+          await authService.logout()
         } catch (error) {
           console.error('Erro ao fazer logout:', error)
         } finally {
+          localStorage.removeItem('auth_token')
           set({ user: null, isAuthenticated: false })
         }
       },
 
       updateUser: async (data: Partial<User>) => {
-        // TODO: Chamar API para atualizar
-        // const updatedUser = await authService.updateProfile(data)
-
-        // Simulação temporária
-        const currentUser = get().user
-        if (currentUser) {
-          const updatedUser = { ...currentUser, ...data }
+        try {
+          const updatedUser = await authService.updateProfile(data)
           set({ user: updatedUser })
+        } catch (error) {
+          const currentUser = get().user
+
+          if (currentUser) {
+            const updatedUser = { ...currentUser, ...data }
+            set({ user: updatedUser })
+          }
+          throw error
         }
       },
     }),
@@ -98,4 +87,3 @@ export const useAuthStore = create<AuthStore>()(
     },
   ),
 )
-
