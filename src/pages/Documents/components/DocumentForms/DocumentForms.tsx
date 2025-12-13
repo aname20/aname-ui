@@ -1,8 +1,9 @@
 import { PrimaryInput } from '@/components/forms/PrimaryInput'
 import { PrimarySelect } from '@/components/forms/PrimarySelect'
+import { useDependents } from '@/services/dependents'
 import CloseIcon from '@mui/icons-material/Close'
 import DescriptionIcon from '@mui/icons-material/Description'
-import { Box, Button, IconButton, MenuItem, Typography } from '@mui/material'
+import { Box, Button, CircularProgress, IconButton, MenuItem, Typography } from '@mui/material'
 import { Controller, type Control, type FieldErrors } from 'react-hook-form'
 import { DocumentType } from '../../types/DocumentType'
 
@@ -21,6 +22,8 @@ interface DocumentFormsProps {
   onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>
   onCancel: () => void
   submitLabel?: string
+  isSubmitting?: boolean
+  existingFileUrl?: string
 }
 
 export const DocumentForms: React.FC<DocumentFormsProps> = ({
@@ -29,7 +32,11 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
   onSubmit,
   onCancel,
   submitLabel = 'Salvar',
+  isSubmitting = false,
+  existingFileUrl,
 }) => {
+  const { data: dependents, isLoading: isLoadingDependents } = useDependents()
+
   return (
     <Box component="form" onSubmit={onSubmit} sx={{ pb: 2, pt: 2 }}>
       {/* Título */}
@@ -61,11 +68,16 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
             error={!!errors.dependentId}
             helperText={errors.dependentId?.message}
             sx={{ mb: 2 }}
+            disabled={isLoadingDependents}
           >
-            <MenuItem value="">Selecionar</MenuItem>
-            <MenuItem value="1">João Silva</MenuItem>
-            <MenuItem value="2">Maria Santos</MenuItem>
-            <MenuItem value="3">Pedro Costa</MenuItem>
+            <MenuItem value="">
+              {isLoadingDependents ? 'Carregando...' : 'Selecionar'}
+            </MenuItem>
+            {dependents?.map((dependent) => (
+              <MenuItem key={dependent.id} value={dependent.id}>
+                {dependent.name}
+              </MenuItem>
+            ))}
           </PrimarySelect>
         )}
       />
@@ -154,7 +166,9 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
                   onChange(file)
                 }}
               />
-              {!value ? (
+
+              {/* Mostra arquivo selecionado ou existente */}
+              {!value && !existingFileUrl ? (
                 <label htmlFor="media-upload">
                   <Button
                     component="span"
@@ -200,11 +214,14 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {(value as File).name}
+                    {value 
+                      ? (value as File).name 
+                      : existingFileUrl?.split('/').pop() || 'Arquivo existente'
+                    }
                   </Typography>
                   <IconButton
                     size="small"
-                    onClick={() => onChange(null)}
+                    onClick={() => onChange(undefined)}
                     sx={{
                       color: '#757575',
                       '&:hover': {
@@ -216,6 +233,23 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
                     <CloseIcon fontSize="small" />
                   </IconButton>
                 </Box>
+              )}
+
+              {/* Botão para trocar arquivo quando já existe um */}
+              {(value || existingFileUrl) && (
+                <label htmlFor="media-upload" style={{ marginTop: '12px' }}>
+                  <Button
+                    component="span"
+                    variant="text"
+                    size="small"
+                    sx={{
+                      color: '#456CE8',
+                      textTransform: 'none',
+                    }}
+                  >
+                    Trocar arquivo
+                  </Button>
+                </label>
               )}
             </>
           )}
@@ -243,7 +277,7 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
           <PrimaryInput
             {...field}
             label="Comentários Adicionais"
-            placeholder="Manual sobre de consulta paga Dr. Bruna"
+            placeholder="Adicione comentários sobre o documento"
             fullWidth
             multiline
             rows={3}
@@ -260,6 +294,7 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
           type="submit"
           variant="contained"
           fullWidth
+          disabled={isSubmitting}
           sx={{
             bgcolor: '#456CE8',
             textTransform: 'none',
@@ -270,15 +305,23 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
             '&:hover': {
               bgcolor: '#3557c9',
             },
+            '&:disabled': {
+              bgcolor: '#B0BEC5',
+            },
           }}
         >
-          {submitLabel}
+          {isSubmitting ? (
+            <CircularProgress size={24} sx={{ color: 'white' }} />
+          ) : (
+            submitLabel
+          )}
         </Button>
         <Button
           type="button"
           variant="outlined"
           fullWidth
           onClick={onCancel}
+          disabled={isSubmitting}
           sx={{
             borderColor: '#E0E0E0',
             color: '#757575',
@@ -300,4 +343,3 @@ export const DocumentForms: React.FC<DocumentFormsProps> = ({
     </Box>
   )
 }
-
