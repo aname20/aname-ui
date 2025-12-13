@@ -1,3 +1,5 @@
+import { useDependents } from '@/services/dependents'
+import { useAuthStore } from '@/stores/authStore'
 import SearchIcon from '@mui/icons-material/Search'
 import {
   Avatar,
@@ -5,6 +7,7 @@ import {
   Button,
   Card,
   CardActionArea,
+  CircularProgress,
   InputAdornment,
   TextField,
   Typography,
@@ -12,52 +15,36 @@ import {
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 
-interface Dependent {
-  id: string
-  name: string
-  age: number
-  relationship: string
-  avatar: string
-}
-
-const mockDependents: Dependent[] = [
-  {
-    id: '1',
-    name: 'Graça Lima',
-    age: 35,
-    relationship: 'Cônjuge',
-    avatar: '/avatars/graca-lima.jpg',
-  },
-  {
-    id: '2',
-    name: 'João Silva',
-    age: 12,
-    relationship: 'Filho',
-    avatar: '/avatars/joao-silva.jpg',
-  },
-  {
-    id: '3',
-    name: 'Maria Santos',
-    age: 8,
-    relationship: 'Filha',
-    avatar: '/avatars/maria-santos.jpg',
-  },
-  {
-    id: '4',
-    name: 'Pedro Costa',
-    age: 65,
-    relationship: 'Pai',
-    avatar: '/avatars/pedro-costa.jpg',
-  },
-]
-
 export const DependentList = () => {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredDependents = mockDependents.filter((dependent) =>
+  const user = useAuthStore((state) => state.user)
+  const isFamily = user?.role === 'FAMILY'
+
+  const { data: dependents = [], isLoading, isError } = useDependents()
+
+  const filteredDependents = dependents.filter((dependent) =>
     dependent.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (isError) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="body2" sx={{ color: '#F44336' }}>
+          Erro ao carregar dependentes. Tente novamente.
+        </Typography>
+      </Box>
+    )
+  }
 
   return (
     <Box sx={{ pb: 2 }}>
@@ -81,23 +68,27 @@ export const DependentList = () => {
             },
           }}
         />
-        <Button
-          variant="contained"
-          onClick={() => navigate('/dependentes/novo')}
-          sx={{
-            bgcolor: '#456CE8',
-            textTransform: 'none',
-            borderRadius: 2,
-            px: 3,
-            whiteSpace: 'nowrap',
-            '&:hover': {
-              bgcolor: '#3557c9',
-            },
-            fontSize: '10px',
-          }}
-        >
-          Adicionar Novo
-        </Button>
+        
+        {/* Botão só aparece para usuários com role FAMILY */}
+        {isFamily && (
+          <Button
+            variant="contained"
+            onClick={() => navigate('/dependentes/novo')}
+            sx={{
+              bgcolor: '#456CE8',
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 3,
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                bgcolor: '#3557c9',
+              },
+              fontSize: '10px',
+            }}
+          >
+            Adicionar Novo
+          </Button>
+        )}
       </Box>
 
       {/* Dependents List */}
@@ -122,10 +113,11 @@ export const DependentList = () => {
               }}
             >
               <Avatar
-                src={dependent.avatar}
                 alt={dependent.name}
-                sx={{ width: 48, height: 48 }}
-              />
+                sx={{ width: 48, height: 48, bgcolor: '#456CE8' }}
+              >
+                {dependent.name.charAt(0)}
+              </Avatar>
               <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="body1"
