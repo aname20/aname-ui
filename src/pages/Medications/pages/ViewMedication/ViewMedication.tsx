@@ -1,5 +1,6 @@
 import { ModalConfirmation } from '@/components/common/ModalConfirmation'
-import { medicationService } from '@/services/medications'
+import { errorToast } from '@/hooks/useToast'
+import { usePrescription, useDeletePrescription } from '@/services/prescriptions/prescription.hooks'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -18,7 +19,6 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import React, { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { MedicationTimeItem } from './components/MedicationTimeItem'
@@ -26,10 +26,8 @@ import { MedicationTimeItem } from './components/MedicationTimeItem'
 export const ViewMedication: React.FC = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const queryClient = useQueryClient()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [skipFetch, setSkipFetch] = useState(false)
   const open = Boolean(anchorEl)
 
   type MappedMedication = {
@@ -43,12 +41,8 @@ export const ViewMedication: React.FC = () => {
     times: { time: string; day: string }[]
   }
 
-  const { data: prescription, isLoading, isError } = useQuery({
-    queryKey: ['prescriptions', id],
-    queryFn: () => medicationService.getPrescriptionDetails(id || ''),
-    enabled: !!id && !skipFetch,
-    staleTime: 5 * 60 * 1000,
-  })
+  const { data: prescription, isLoading, isError } = usePrescription(id || '', !!id)
+  const deletePrescription = useDeletePrescription()
 
   const medication = useMemo<MappedMedication | null>((): MappedMedication | null =>{
     if (!prescription) return null
@@ -100,31 +94,19 @@ export const ViewMedication: React.FC = () => {
     setIsDeleteModalOpen(true)
   }
 
-  const { mutate: deletePrescription, isPending: isDeleting } = useMutation({
-    mutationFn: () => medicationService.removePrescription(id || ''),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
-      navigate('/remedios')
-    },
-    onError: (error) => {
-      console.error('Erro ao excluir remédio', error)
-      setSkipFetch(false)
-    },
-    onSettled: () => {
-      setIsDeleteModalOpen(false)
-    },
-  })
-
   const handleConfirmDelete = async () => {
     if (!id) {
-      console.error('ID do remédio não encontrado para exclusão')
       setIsDeleteModalOpen(false)
       return
     }
 
-    setSkipFetch(true)
-    deletePrescription()
-
+    try {
+      await deletePrescription.mutateAsync(id)
+      setIsDeleteModalOpen(false)
+      navigate('/remedios')
+    } catch {
+      errorToast('Erro ao excluir remédio')
+    }
   }
 
   const handleCancelDelete = () => {
@@ -427,7 +409,7 @@ export const ViewMedication: React.FC = () => {
 
       <ModalConfirmation
         open={isDeleteModalOpen}
-        loading={isDeleting}
+        loading={deletePrescription.isPending}
         onClose={handleCancelDelete}
         title="Você tem certeza que deseja excluir esse remédio?"
         subtitle="Essa ação não poderá ser desfeita."
