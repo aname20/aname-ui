@@ -5,6 +5,7 @@ export interface Event {
   date: string
   status: EventStatus
   location?: string
+  diagnosis?: string
   dependentId: string
   doctorId?: number
   createdAt: string
@@ -31,6 +32,7 @@ export interface CreateEventDto {
   description?: string
   date: string
   location?: string
+  diagnosis?: string
   dependentId: string
   doctorId?: number
 }
@@ -41,6 +43,7 @@ export interface UpdateEventDto {
   date?: string
   status?: EventStatus
   location?: string
+  diagnosis?: string
   dependentId?: string
   doctorId?: number
 }
