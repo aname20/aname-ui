@@ -1,11 +1,23 @@
 import { useAuthStore } from '@/stores/authStore'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Alert, Box, Button, Link, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  Link,
+  Radio,
+  RadioGroup,
+  Typography,
+} from '@mui/material'
 import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { AuthInput } from '../../components/AuthInput/AuthInput'
 import { registerSchema, type RegisterFormData } from './schemas/register.schema'
+import type { UserRole } from '@/types/auth'
 
 export const Register: React.FC = () => {
   const navigate = useNavigate()
@@ -15,9 +27,13 @@ export const Register: React.FC = () => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: yupResolver(registerSchema),
+    defaultValues: {
+      role: 'FAMILY',
+    },
   })
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -27,6 +43,7 @@ export const Register: React.FC = () => {
         name: data.name,
         email: data.email,
         password: data.password,
+        role: data.role as UserRole,
       })
       navigate('/home')
     } catch {
@@ -127,6 +144,76 @@ export const Register: React.FC = () => {
             helperText={errors.confirmPassword?.message}
           />
 
+          <FormControl error={!!errors.role} sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'white',
+                mb: 1,
+                textAlign: 'left',
+                fontWeight: 500,
+              }}
+            >
+              Tipo de Usuário
+            </Typography>
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <RadioGroup
+                  {...field}
+                  row
+                  sx={{
+                    justifyContent: 'left',
+                    gap: 2,
+                  }}
+                >
+                  <FormControlLabel
+                    value="FAMILY"
+                    control={
+                      <Radio
+                        sx={{
+                          color: 'white',
+                          '&.Mui-checked': {
+                            color: 'white',
+                          },
+                        }}
+                      />
+                    }
+                    label={
+                      <Typography sx={{ color: 'white', fontSize: '0.9rem' }}>
+                        Familiar
+                      </Typography>
+                    }
+                  />
+                  <FormControlLabel
+                    value="CAREGIVER"
+                    control={
+                      <Radio
+                        sx={{
+                          color: 'white',
+                          '&.Mui-checked': {
+                            color: 'white',
+                          },
+                        }}
+                      />
+                    }
+                    label={
+                      <Typography sx={{ color: 'white', fontSize: '0.9rem' }}>
+                        Cuidador
+                      </Typography>
+                    }
+                  />
+                </RadioGroup>
+              )}
+            />
+            {errors.role && (
+              <FormHelperText sx={{ color: '#ffcdd2', textAlign: 'center' }}>
+                {errors.role.message}
+              </FormHelperText>
+            )}
+          </FormControl>
+
           <Button
             type="submit"
             fullWidth
@@ -170,4 +257,3 @@ export const Register: React.FC = () => {
     </Box>
   )
 }
-

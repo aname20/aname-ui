@@ -21,7 +21,11 @@ export const registerSchema = yup.object({
     .string()
     .oneOf([yup.ref('password')], 'As senhas devem coincidir')
     .required('Confirme sua senha'),
+
+  role: yup
+    .string()
+    .oneOf(['CAREGIVER', 'FAMILY'], 'Selecione um tipo de usuário')
+    .required('Selecione o tipo de usuário'),
 })
 
 export type RegisterFormData = yup.InferType<typeof registerSchema>
-

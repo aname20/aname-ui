@@ -5,6 +5,7 @@ import {
   Avatar,
   Box,
   Button,
+  CircularProgress,
   IconButton,
   ListItemIcon,
   ListItemText,
@@ -12,46 +13,45 @@ import {
   MenuItem,
   Typography
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { eventsService } from '@/services/events/events.service'
+import type { Event } from '@/types/event'
 
-// Mock data - substituir por chamada à API
-const mockAppointment = {
-  id: '1',
-  title: 'Eletrocardiograma',
-  description: 'Exame',
-  date: '20/03',
-  dayOfWeek: 'Quinta',
-  time: '09:00',
-  doctor: {
-    name: 'Dr. Marco Di\'Angelo',
-    specialty: 'Cardiologia Clínica',
-  },
-  dependent: {
-    id: '1',
-    name: 'Graça Lima',
-    age: 35,
-    avatar: '/avatars/graca-lima.jpg',
-  },
-  location: {
-    name: 'AmorSaúde Caragibe',
-    address: 'Rua dos Camaragibes, 123',
-    rating: 5.0,
-    reviews: 230,
-    mapImage: '/maps/amorosaude-caragibe.jpg',
-  },
-  comments: 'Sem comentários',
-  diagnosis: 'Aguardando diagnóstico',
-}
+
 
 export const AgendaDetails = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [event, setEvent] = useState<Event | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const menuOpen = Boolean(anchorEl)
 
-  // TODO: Buscar dados reais da API usando o id
-  const appointment = mockAppointment
+  useEffect(() => {
+    const fetchEvent = async () => {
+      if (!id) {
+        setError('ID do evento não encontrado')
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        setError(null)
+        const eventData = await eventsService.findOne(Number(id))
+        setEvent(eventData)
+      } catch (err) {
+        console.error('Error fetching event:', err)
+        setError('Erro ao carregar evento')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchEvent()
+  }, [id])
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -66,10 +66,17 @@ export const AgendaDetails = () => {
     handleMenuClose()
   }
 
-  const handleDelete = () => {
-    // TODO: Implementar lógica de exclusão
-    console.log('Excluir agendamento:', id)
-    handleMenuClose()
+  const handleDelete = async () => {
+    if (!id) return
+    
+    try {
+      await eventsService.remove(Number(id))
+      handleMenuClose()
+      navigate('/agenda')
+    } catch (err) {
+      console.error('Error deleting event:', err)
+      // TODO: Show error toast
+    }
   }
 
   const handleRelateDiagnostic = () => {
@@ -77,8 +84,35 @@ export const AgendaDetails = () => {
   }
 
   const handleDependentClick = () => {
-    navigate(`/dependentes/${appointment.dependent.id}`)
+    if (event?.dependentId) {
+      navigate(`/dependentes/${event.dependentId}`)
+    }
   }
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error || !event) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <Typography sx={{ color: '#d32f2f', fontSize: '14px' }}>
+          {error || 'Evento não encontrado'}
+        </Typography>
+      </Box>
+    )
+  }
+
+  // Format date and time
+  const eventDate = new Date(event.date)
+  const dateStr = eventDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  const dayOfWeek = eventDate.toLocaleDateString('pt-BR', { weekday: 'long' })
+  const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)
+  const timeStr = eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
   return (
     <Box sx={{ pb: 2 }}>
@@ -86,10 +120,10 @@ export const AgendaDetails = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 0.5 }}>
         <Box sx={{ flex: 1 }}>
           <Typography variant="h5" sx={{ color: '#0033DA', fontWeight: 700, mb: 0.5 }}>
-            {appointment.title}
+            {event.title}
           </Typography>
           <Typography variant="body2" sx={{ color: '#757575', mb: 2 }}>
-            {appointment.description}
+            {event.description || 'Sem descrição'}
           </Typography>
         </Box>
         <IconButton
@@ -143,13 +177,13 @@ export const AgendaDetails = () => {
           }}
         >
           <Typography variant="h4" sx={{ color: '#0033DA', fontWeight: 700, lineHeight: 1 }}>
-            {appointment.date}
+            {dateStr}
           </Typography>
           <Typography variant="body2" sx={{ color: '#0033DA', fontWeight: 600 }}>
-            {appointment.dayOfWeek}
+            {capitalizedDayOfWeek}
           </Typography>
           <Typography variant="body2" sx={{ color: '#0033DA' }}>
-            {appointment.time}
+            {timeStr}
           </Typography>
         </Box>
 
@@ -174,16 +208,16 @@ export const AgendaDetails = () => {
           }}
         >
           <Avatar
-            src={appointment.dependent.avatar}
-            alt={appointment.dependent.name}
-            sx={{ width: 56, height: 56 }}
-          />
+            sx={{ width: 56, height: 56, bgcolor: '#0033DA' }}
+          >
+            {event.dependent?.name?.charAt(0) || 'D'}
+          </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-              {appointment.dependent.name}
+              {event.dependent?.name || 'Dependente'}
             </Typography>
             <Typography variant="body2" sx={{ color: '#757575' }}>
-              {appointment.dependent.age} anos
+              {event.dependent?.age && `${event.dependent.age} anos`}
             </Typography>
           </Box>
           <Typography sx={{ color: '#0033DA', fontSize: '2rem', lineHeight: 1 }}>›</Typography>
@@ -198,7 +232,7 @@ export const AgendaDetails = () => {
             Médico
           </Typography>
           <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-            {appointment.doctor.name}
+            {event.doctor?.name || 'Não informado'}
           </Typography>
         </Box>
 
@@ -208,7 +242,7 @@ export const AgendaDetails = () => {
             Especialidade
           </Typography>
           <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-            {appointment.doctor.specialty}
+            {event.doctor?.specialty || 'Não informado'}
           </Typography>
         </Box>
       </Box>
@@ -219,7 +253,7 @@ export const AgendaDetails = () => {
           Comentários
         </Typography>
         <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {appointment.comments}
+          {event.description || 'Sem comentários'}
         </Typography>
       </Box>
 
@@ -229,7 +263,7 @@ export const AgendaDetails = () => {
           Diagnóstico
         </Typography>
         <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {appointment.diagnosis}
+          Aguardando diagnóstico
         </Typography>
       </Box>
 

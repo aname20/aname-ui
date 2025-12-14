@@ -1,4 +1,4 @@
-import { medicationService } from '@/services/medications'
+import { usePrescriptions } from '@/services/prescriptions/prescription.hooks'
 import type { Prescription } from '@/types/medication'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -7,7 +7,6 @@ import {
     InputAdornment,
     TextField,
 } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { MedicationItem } from './components/MedicationItem'
@@ -16,11 +15,7 @@ export const Medications: React.FC = () => {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data: prescriptions = [], isLoading, isError } = useQuery({
-    queryKey: ['prescriptions'],
-    queryFn: () => medicationService.getPrescriptions(),
-    staleTime: 5 * 60 * 1000,
-  })
+  const { data: prescriptions = [], isLoading, isError } = usePrescriptions()
 
   const filteredMedications = useMemo(() => {
     const term = searchTerm.toLowerCase().trim()

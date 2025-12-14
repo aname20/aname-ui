@@ -1,11 +1,13 @@
-import SearchIcon from '@mui/icons-material/Search'
+import { useDocuments } from '@/services/documents'
 import DescriptionIcon from '@mui/icons-material/Description'
+import SearchIcon from '@mui/icons-material/Search'
 import {
   Box,
   Button,
   Card,
   CardActionArea,
   Chip,
+  CircularProgress,
   InputAdornment,
   Tab,
   Tabs,
@@ -14,63 +16,7 @@ import {
 } from '@mui/material'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { DocumentType } from '../../types/DocumentType'
-
-interface Document {
-  id: string
-  title: string
-  type: DocumentType
-  updatedAt: string
-}
-
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    title: 'Laboratório Vivaz',
-    type: DocumentType.PRESCRIPTION,
-    updatedAt: 'Atualizado Hoje',
-  },
-  {
-    id: '2',
-    title: 'Endoscopia 2',
-    type: DocumentType.REPORT,
-    updatedAt: 'Criado ontem',
-  },
-  {
-    id: '3',
-    title: 'Hemograma Geral',
-    type: DocumentType.EXAM,
-    updatedAt: 'Criado 23 Fevereiro',
-  },
-  {
-    id: '4',
-    title: 'Meia Circulação',
-    type: DocumentType.OTHER,
-    updatedAt: 'Criado 9 Janeiro',
-  },
-  {
-    id: '5',
-    title: 'Raio-X Tórax',
-    type: DocumentType.EXAM,
-    updatedAt: 'Criado 15 Janeiro',
-  },
-  {
-    id: '6',
-    title: 'Receita Antibiótico',
-    type: DocumentType.PRESCRIPTION,
-    updatedAt: 'Criado 20 Janeiro',
-  },
-]
-
-const getDocumentTypeLabel = (type: DocumentType): string => {
-  const labels = {
-    [DocumentType.PRESCRIPTION]: 'Receita',
-    [DocumentType.REPORT]: 'Laudo',
-    [DocumentType.EXAM]: 'Exame',
-    [DocumentType.OTHER]: 'Outros',
-  }
-  return labels[type]
-}
+import { DocumentType, getDocumentTypeLabel } from '../../types/DocumentType'
 
 const getDocumentTypeColor = (type: DocumentType): string => {
   const colors = {
@@ -92,19 +38,38 @@ const getDocumentTypeTextColor = (type: DocumentType): string => {
   return colors[type]
 }
 
+const formatUpdatedAt = (dateString: string): string => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffTime = Math.abs(now.getTime() - date.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) return 'Atualizado Hoje'
+  if (diffDays === 1) return 'Atualizado Ontem'
+
+  const months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ]
+  return `Criado ${date.getDate()} ${months[date.getMonth()]}`
+}
+
 export const DocumentList = () => {
   const navigate = useNavigate()
   const [tabValue, setTabValue] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const { data: documents, isLoading, error } = useDocuments()
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
   }
 
   const getFilteredDocuments = () => {
-    let filtered = mockDocuments
+    if (!documents) return []
 
-    // Filtrar por tab
+    let filtered = documents
+
     if (tabValue === 1) {
       filtered = filtered.filter((doc) => doc.type === DocumentType.PRESCRIPTION)
     } else if (tabValue === 2) {
@@ -115,7 +80,6 @@ export const DocumentList = () => {
       filtered = filtered.filter((doc) => doc.type === DocumentType.OTHER)
     }
 
-    // Filtrar por busca
     if (searchQuery) {
       filtered = filtered.filter((doc) =>
         doc.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -127,9 +91,33 @@ export const DocumentList = () => {
 
   const filteredDocuments = getFilteredDocuments()
 
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress sx={{ color: '#456CE8' }} />
+      </Box>
+    )
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="body1" sx={{ color: '#d32f2f', mb: 2 }}>
+          Erro ao carregar documentos
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={() => window.location.reload()}
+          sx={{ color: '#456CE8', borderColor: '#456CE8' }}
+        >
+          Tentar novamente
+        </Button>
+      </Box>
+    )
+  }
+
   return (
     <Box sx={{ pb: 2 }}>
-      {/* Tabs */}
       <Tabs
         value={tabValue}
         onChange={handleTabChange}
@@ -320,7 +308,7 @@ export const DocumentList = () => {
                   fontSize: '0.75rem',
                 }}
               >
-                {document.updatedAt}
+                {formatUpdatedAt(document.updatedAt)}
               </Typography>
             </CardActionArea>
           </Card>

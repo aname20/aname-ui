@@ -17,33 +17,26 @@ import SearchIcon from '@mui/icons-material/Search'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import AddIcon from '@mui/icons-material/Add'
-import NotificationsIcon from '@mui/icons-material/Notifications'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate, useParams } from 'react-router'
 import { useForm, Controller, useFieldArray, useWatch, type Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   editMedicationSchema,
   type EditMedicationFormData,
 } from './schema/schema'
 import { formatDate } from '@/utils/date'
-import { medicationService } from '@/services/medications'
-import { mockDependents } from '@/stores/prescriptionStore'
+import { usePrescription, useUpdatePrescription } from '@/services/prescriptions/prescription.hooks'
+import { useDependents } from '@/services/dependents/dependents.hooks'
+import { errorToast } from '@/hooks/useToast'
 
 export const EditMedication: React.FC = () => {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { id } = useParams<{ id: string }>()
-
-  // Busca os dados da prescrição existente
-  const { data: prescription, isLoading: isLoadingPrescription } = useQuery({
-    queryKey: ['prescriptions', id],
-    queryFn: () => medicationService.getPrescriptionDetails(id || ''),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  })
+  const { data: prescription, isLoading: isLoadingPrescription } = usePrescription(id || '', !!id)
+  const updatePrescription = useUpdatePrescription()
+  const { data: dependents = [] } = useDependents()
 
   // Valores padrão para o formulário
   const defaultFormValues: EditMedicationFormData = {
@@ -81,7 +74,7 @@ export const EditMedication: React.FC = () => {
       }
 
       reset({
-        medication: prescription.medication?.name || '',
+        medication: prescription.medication?.name || prescription.medicationId?.toString() || '',
         dependent: prescription.dependentId || '',
         doctor: prescription.doctorName || '',
         dosage: prescription.dosage || '',
@@ -105,22 +98,15 @@ export const EditMedication: React.FC = () => {
     defaultValue: true,
   })
 
-  // Mutation para atualizar prescrição
-  const { mutate: updatePrescription } = useMutation({
-    mutationFn: (data: EditMedicationFormData) =>
-      medicationService.updatePrescription(id || '', data),
-    onSuccess: () => {
-      // Invalida o cache para atualizar a listagem e os detalhes
-      queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
-      navigate(`/remedios/${id}`)
-    },
-    onError: (error) => {
-      console.error('Erro ao atualizar prescrição:', error)
-    },
-  })
-
   const onSubmit = async (data: EditMedicationFormData) => {
-    updatePrescription(data)
+    if (!id) return
+    
+    try {
+      await updatePrescription.mutateAsync({ id, data })
+      navigate(`/remedios/${id}`)
+    } catch {
+      errorToast('Erro ao atualizar prescrição')
+    }
   }
 
   const handleCancel = () => {
@@ -227,8 +213,8 @@ export const EditMedication: React.FC = () => {
                   if (!selected) {
                     return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
                   }
-                  // Busca o nome do dependente no mock
-                  const dependent = mockDependents.find(d => d.id === selected)
+                  // Busca o nome do dependente
+                  const dependent = dependents.find(d => d.id === selected)
                   return dependent?.name || selected
                 }}
                 IconComponent={KeyboardArrowDownIcon}
@@ -240,7 +226,7 @@ export const EditMedication: React.FC = () => {
                   },
                 }}
               >
-                {mockDependents.map((dep) => (
+                {dependents.map((dep) => (
                   <MenuItem key={dep.id} value={dep.id}>
                     {dep.name}
                   </MenuItem>
@@ -594,7 +580,7 @@ export const EditMedication: React.FC = () => {
           color="primary"
           fullWidth
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || updatePrescription.isPending}
           sx={{
             borderRadius: 2,
             py: 1.5,
@@ -602,7 +588,7 @@ export const EditMedication: React.FC = () => {
             fontSize: { xs: '0.875rem', sm: '0.9375rem' },
           }}
         >
-          {isSubmitting ? 'Salvando...' : 'Salvar'}
+          {isSubmitting || updatePrescription.isPending ? 'Salvando...' : 'Salvar'}
         </Button>
       </Box>
     </Box>

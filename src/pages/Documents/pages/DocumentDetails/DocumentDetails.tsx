@@ -1,42 +1,27 @@
+import { ModalConfirmation } from '@/components/common/ModalConfirmation'
+import { useDeleteDocument, useDocumentById } from '@/services/documents'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DownloadIcon from '@mui/icons-material/Download'
 import EditIcon from '@mui/icons-material/Edit'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import {
+  Alert,
   Avatar,
   Box,
   Button,
   Chip,
+  CircularProgress,
   IconButton,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
+  Snackbar,
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { DocumentType, getDocumentTypeLabel } from '../../types/DocumentType'
-
-// Mock data - substituir por chamada à API
-const mockDocument = {
-  id: '1',
-  title: 'Laboratório Vivaz',
-  type: DocumentType.PRESCRIPTION,
-  date: '25/01',
-  dayOfWeek: 'Sábado',
-  year: '2025',
-  dependent: {
-    id: '1',
-    name: 'Graça Lima',
-    age: 35,
-    avatar: '/avatars/graca-lima.jpg',
-  },
-  location: 'Clínica Amor Saúde',
-  comments: 'Manual sobre de consulta paga Dr. Bruna',
-  fileUrl: '/documents/laboratorio-vivaz.pdf',
-  fileName: 'laboratorio-vivaz.pdf',
-}
 
 const getDocumentTypeColor = (type: DocumentType): string => {
   const colors = {
@@ -58,14 +43,33 @@ const getDocumentTypeTextColor = (type: DocumentType): string => {
   return colors[type]
 }
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  const day = date.getDate().toString().padStart(2, '0')
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const year = date.getFullYear()
+
+  const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+  const dayOfWeek = daysOfWeek[date.getDay()]
+
+  return {
+    dayMonth: `${day}/${month}`,
+    dayOfWeek,
+    year: year.toString(),
+  }
+}
+
 export const DocumentDetails = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const menuOpen = Boolean(anchorEl)
 
-  // TODO: Buscar dados reais da API usando o id
-  const document = mockDocument
+  const { data: document, isLoading, error: fetchError } = useDocumentById(Number(id))
+  const deleteDocument = useDeleteDocument()
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -80,20 +84,32 @@ export const DocumentDetails = () => {
     handleMenuClose()
   }
 
-  const handleDelete = () => {
-    // TODO: Implementar lógica de exclusão
-    console.log('Excluir documento:', id)
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true)
     handleMenuClose()
   }
 
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteDocument.mutateAsync(Number(id))
+      navigate('/documentos')
+    } catch {
+      setError('Erro ao excluir documento. Tente novamente.')
+    }
+  }
+
   const handleDependentClick = () => {
-    navigate(`/dependentes/${document.dependent.id}`)
+    if (document?.dependent) {
+      navigate(`/dependentes/${document.dependent.id}`)
+    }
   }
 
   const handleDownloadDocument = () => {
+    if (!document?.fileUrl) return
+
     const link = window.document.createElement('a')
     link.href = document.fileUrl
-    link.download = document.fileName
+    link.download = document.fileUrl.split('/').pop() || 'documento'
     link.target = '_blank'
     
     window.document.body.appendChild(link)
@@ -101,9 +117,39 @@ export const DocumentDetails = () => {
     window.document.body.removeChild(link)
   }
 
+  const handleCloseError = () => {
+    setError(null)
+  }
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress sx={{ color: '#456CE8' }} />
+      </Box>
+    )
+  }
+
+  if (fetchError || !document) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="body1" sx={{ color: '#d32f2f', mb: 2 }}>
+          Documento não encontrado
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/documentos')}
+          sx={{ color: '#456CE8', borderColor: '#456CE8' }}
+        >
+          Voltar para lista
+        </Button>
+      </Box>
+    )
+  }
+
+  const dateInfo = formatDate(document.date)
+
   return (
     <Box sx={{ pb: 2 }}>
-      {/* Título e Menu */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 0.5 }}>
         <Box sx={{ flex: 1 }}>
           <Typography variant="h5" sx={{ color: '#0033DA', fontWeight: 700, mb: 0.5 }}>
@@ -149,7 +195,7 @@ export const DocumentDetails = () => {
           </ListItemIcon>
           <ListItemText>Editar</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleDelete}>
+        <MenuItem onClick={handleDeleteClick}>
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
@@ -171,13 +217,13 @@ export const DocumentDetails = () => {
           }}
         >
           <Typography variant="h4" sx={{ color: '#0033DA', fontWeight: 700, lineHeight: 1 }}>
-            {document.date}
+            {dateInfo.dayMonth}
           </Typography>
           <Typography variant="body2" sx={{ color: '#0033DA', fontWeight: 600 }}>
-            {document.dayOfWeek}
+            {dateInfo.dayOfWeek}
           </Typography>
           <Typography variant="body2" sx={{ color: '#0033DA', fontSize: '0.75rem' }}>
-            {document.year}
+            {dateInfo.year}
           </Typography>
         </Box>
 
@@ -202,65 +248,34 @@ export const DocumentDetails = () => {
           }}
         >
           <Avatar
-            src={document.dependent.avatar}
             alt={document.dependent.name}
-            sx={{ width: 56, height: 56 }}
-          />
+            sx={{ width: 56, height: 56, bgcolor: '#456CE8' }}
+          >
+            {document.dependent.name.charAt(0)}
+          </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
               {document.dependent.name}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#757575' }}>
-              {document.dependent.age} anos
             </Typography>
           </Box>
           <Typography sx={{ color: '#0033DA', fontSize: '2rem', lineHeight: 1 }}>›</Typography>
         </Box>
       </Box>
 
-      {/* Local */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          Local
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {document.location}
-        </Typography>
-      </Box>
-
       {/* Comentários */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-          Comentários Adicionais
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-          {document.comments}
-        </Typography>
-      </Box>
+      {document.comments && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
+            Comentários Adicionais
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
+            {document.comments}
+          </Typography>
+        </Box>
+      )}
 
-      {/* Botões de Ação */}
+      {/* Botão de Download */}
       <Box sx={{ display: 'flex', gap: 2 }}>
-        {/* <Button
-          fullWidth
-          variant="outlined"
-          onClick={handleViewDocument}
-          startIcon={<VisibilityIcon />}
-          sx={{
-            borderColor: '#456CE8',
-            color: '#456CE8',
-            textTransform: 'none',
-            py: 1.5,
-            fontSize: '1rem',
-            fontWeight: 500,
-            borderRadius: 2,
-            '&:hover': {
-              borderColor: '#3557c9',
-              bgcolor: '#F8F9FF',
-            },
-          }}
-        >
-          Visualizar
-        </Button> */}
         <Button
           fullWidth
           variant="contained"
@@ -281,6 +296,30 @@ export const DocumentDetails = () => {
           Download
         </Button>
       </Box>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ModalConfirmation
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Documento"
+        subtitle="Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        loading={deleteDocument.isPending}
+      />
+
+      {/* Snackbar de erro */}
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

@@ -1,11 +1,21 @@
 import { DocumentForms } from '@/pages/Documents/components/DocumentForms'
+import { useCreateDocument } from '@/services/documents'
+import { useUploadFile } from '@/services/storage'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Alert, Snackbar } from '@mui/material'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { documentNewSchema, type DocumentNewFormData } from './schemas/documentNew.schema'
 
 export const DocumentNew = () => {
   const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+
+  const uploadFile = useUploadFile()
+  const createDocument = useCreateDocument()
+
+  const isSubmitting = uploadFile.isPending || createDocument.isPending
 
   const {
     control,
@@ -25,11 +35,22 @@ export const DocumentNew = () => {
 
   const onSubmit = async (data: DocumentNewFormData) => {
     try {
-      // TODO: Implementar chamada à API
-      console.log('Dados do formulário:', data)
+      setError(null)
+
+      const uploadResponse = await uploadFile.mutateAsync(data.media as File)
+
+      await createDocument.mutateAsync({
+        title: data.title,
+        dependentId: data.dependentId,
+        type: data.type,
+        date: data.date,
+        fileUrl: uploadResponse.url,
+        comments: data.comments || undefined,
+      })
+
       navigate('/documentos')
-    } catch (error) {
-      console.error('Erro ao salvar documento:', error)
+    } catch {
+      setError('Erro ao salvar documento. Tente novamente.')
     }
   }
 
@@ -37,13 +58,31 @@ export const DocumentNew = () => {
     navigate('/documentos')
   }
 
+  const handleCloseError = () => {
+    setError(null)
+  }
+
   return (
-    <DocumentForms
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      control={control as any}
-      errors={errors}
-      onSubmit={handleSubmit(onSubmit)}
-      onCancel={handleCancel}
-    />
+    <>
+      <DocumentForms
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        control={control as any}
+        errors={errors}
+        onSubmit={handleSubmit(onSubmit)}
+        onCancel={handleCancel}
+        isSubmitting={isSubmitting}
+      />
+
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </>
   )
 }
