@@ -1,4 +1,5 @@
 import { useEvent } from '@/services/agenda/agenda.hooks'
+import type { AgendaEvent } from '@/services/agenda/agenda.service'
 import { formatDate } from '@/utils/agenda'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
@@ -17,32 +18,6 @@ import {
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
-interface EventData {
-  id: string
-  title: string
-  description?: string
-  date: string
-  time: string
-  doctor?: string | {
-    id: string
-    name: string
-    specialty?: string
-    createdAt?: string
-    updatedAt?: string
-  }
-  location?: string
-  comments?: string
-  diagnosis?: string
-  dependentId?: string
-  dependent?: {
-    id: string
-    name: string
-    age?: number
-    avatar?: string
-  }
-  [key: string]: unknown
-}
-
 export const AgendaDetails = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
@@ -54,10 +29,18 @@ export const AgendaDetails = () => {
   const appointment = useMemo(() => {
     if (!event) return null
 
-    const eventData = event as unknown as EventData
+    const eventData = event as AgendaEvent
+    
+    // Extrair data e hora do formato ISO
+    const eventDate = new Date(eventData.date)
     const { date: formattedDate, dayOfWeek } = formatDate(eventData.date)
     const dateParts = formattedDate.split('/')
     const shortDate = `${dateParts[0]}/${dateParts[1]}`
+    
+    // Extrair hora no formato HH:mm
+    const hours = eventDate.getHours().toString().padStart(2, '0')
+    const minutes = eventDate.getMinutes().toString().padStart(2, '0')
+    const time = `${hours}:${minutes}`
 
     // Tratar doctor como objeto ou string
     const doctorData = typeof eventData.doctor === 'object' && eventData.doctor !== null
@@ -72,7 +55,7 @@ export const AgendaDetails = () => {
       description: eventData.description || '',
       date: shortDate,
       dayOfWeek: dayOfWeek.substring(0, 5), // Primeiras 5 letras (ex: "Quinta")
-      time: eventData.time || '',
+      time,
       doctor: {
         name: doctorName,
         specialty: doctorSpecialty,
@@ -247,7 +230,7 @@ export const AgendaDetails = () => {
               {appointment.dependent.name}
             </Typography>
             <Typography variant="body2" sx={{ color: '#757575' }}>
-              {appointment.dependent.age} anos
+              {appointment.dependent.age ? `${appointment.dependent.age} anos` : ''}
             </Typography>
           </Box>
           <Typography sx={{ color: '#0033DA', fontSize: '2rem', lineHeight: 1 }}>›</Typography>

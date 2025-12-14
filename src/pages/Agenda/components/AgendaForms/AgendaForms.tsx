@@ -1,7 +1,15 @@
 import { PrimaryInput } from '@/components/forms/PrimaryInput'
-import { PrimarySelect } from '@/components/forms/PrimarySelect'
+import { useDependents } from '@/services/dependents/dependents.hooks'
+import { useDoctors } from '@/services/doctors/doctors.hooks'
 import SearchIcon from '@mui/icons-material/Search'
-import { Box, Button, InputAdornment, MenuItem } from '@mui/material'
+import {
+  Autocomplete,
+  Box,
+  Button,
+  CircularProgress,
+  InputAdornment,
+  TextField,
+} from '@mui/material'
 import { Controller, type Control, type FieldErrors } from 'react-hook-form'
 
 interface AgendaFormData {
@@ -10,7 +18,6 @@ interface AgendaFormData {
   diagnosis: string
   dependentId: string
   date: string
-  time: string
   doctor: string
   location: string
   comments?: string
@@ -21,7 +28,8 @@ interface AgendaFormsProps {
   errors: FieldErrors<AgendaFormData>
   onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>
   onCancel: () => void
-  submitLabel?: string
+  submitLabel?: string,
+  isSubmitting?: boolean
 }
 
 export const AgendaForms: React.FC<AgendaFormsProps> = ({
@@ -30,7 +38,11 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
   onSubmit,
   onCancel,
   submitLabel = 'Salvar',
+  isSubmitting = false,
 }) => {
+  const { data: dependents = [], isLoading: isLoadingDependents } = useDependents()
+  const { data: doctors = [], isLoading: isLoadingDoctors } = useDoctors()
+
   return (
     <Box component="form" onSubmit={onSubmit} sx={{ pb: 2, pt: 2 }}>
       {/* Título */}
@@ -72,73 +84,74 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
         name="dependentId"
         control={control}
         render={({ field }) => (
-          <PrimarySelect
-            {...field}
-            label="Dependente"
-            fullWidth
-            error={!!errors.dependentId}
-            helperText={errors.dependentId?.message}
+          <Autocomplete
+            options={dependents}
+            getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
+            loading={isLoadingDependents}
+            value={
+              dependents.find((dep) => dep.id === field.value) || null
+            }
+            onChange={(_, newValue) => {
+              field.onChange(newValue ? newValue.id : '')
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Dependente"
+                error={!!errors.dependentId}
+                helperText={errors.dependentId?.message}
+                placeholder="Pesquisar dependente"
+              />
+            )}
             sx={{ mb: 2 }}
-          >
-            <MenuItem value="">Selecionar</MenuItem>
-            <MenuItem value="1">João Silva</MenuItem>
-            <MenuItem value="2">Maria Santos</MenuItem>
-            <MenuItem value="3">Pedro Costa</MenuItem>
-          </PrimarySelect>
+          />
         )}
       />
 
       {/* Data e Hora */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <Controller
-          name="date"
-          control={control}
-          render={({ field }) => (
-            <PrimaryInput
-              {...field}
-              label="Data"
-              type="date"
-              fullWidth
-              error={!!errors.date}
-              helperText={errors.date?.message}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          )}
-        />
-
-        <Controller
-          name="time"
-          control={control}
-          render={({ field }) => (
-            <PrimaryInput
-              {...field}
-              label="Hora"
-              type="time"
-              fullWidth
-              error={!!errors.time}
-              helperText={errors.time?.message}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          )}
-        />
-      </Box>
+      <Controller
+        name="date"
+        control={control}
+        render={({ field }) => (
+          <PrimaryInput
+            {...field}
+            label="Data e Hora"
+            type="datetime-local"
+            fullWidth
+            error={!!errors.date}
+            helperText={errors.date?.message}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            sx={{ mb: 2 }}
+          />
+        )}
+      />
 
       {/* Médico */}
       <Controller
         name="doctor"
         control={control}
         render={({ field }) => (
-          <PrimaryInput
-            {...field}
-            label="Médico"
-            placeholder="Inserir Nome do Médico"
-            fullWidth
-            error={!!errors.doctor}
-            helperText={errors.doctor?.message}
+          <Autocomplete
+            options={doctors}
+            getOptionLabel={(option) => option.name}
+            loading={isLoadingDoctors}
+            value={
+              doctors.find((doc) => doc.id === field.value || doc.name === field.value) || null
+            }
+            onChange={(_, newValue) => {
+              field.onChange(newValue ? newValue.id : '')
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Médico"
+                error={!!errors.doctor}
+                helperText={errors.doctor?.message}
+                placeholder="Pesquisar médico"
+              />
+            )}
             sx={{ mb: 2 }}
           />
         )}
@@ -224,7 +237,11 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
             },
           }}
         >
-          {submitLabel}
+          {isSubmitting ? (
+            <>
+              <CircularProgress color="inherit" size={22} sx={{mr: 1}} />
+            </>
+          ) : submitLabel}
         </Button>
         <Button
           type="button"
