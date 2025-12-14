@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Carousel } from '../../components/Carousel'
 import { prescriptionsService } from '@/services/prescriptions/prescriptions.service'
+import { eventsService } from '@/services/events/events.service'
 
 interface MedicationCard {
   id: string
@@ -26,8 +27,11 @@ interface EventCard {
 export const Home: React.FC = () => {
   const navigate = useNavigate()
   const [medications, setMedications] = useState<MedicationCard[]>([])
+  const [events, setEvents] = useState<EventCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [eventsError, setEventsError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchPrescriptions = async () => {
@@ -64,29 +68,38 @@ export const Home: React.FC = () => {
     fetchPrescriptions()
   }, [])
 
-  const events: EventCard[] = [
-    {
-      id: "1",
-      title: "Eletrocardiograma",
-      date: "03/04",
-      time: "18:00",
-      person: "Graça Lima",
-    },
-    {
-      id: "2",
-      title: "Infiltração no joelho",
-      date: "07/04",
-      time: "7:00",
-      person: "Maria Luiz da Silva",
-    },
-    {
-      id: "3",
-      title: "Consulta Oftalmológica",
-      date: "10/04",
-      time: "14:00",
-      person: "João Santos",
-    },
-  ]
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setIsLoadingEvents(true)
+        setEventsError(null)
+        const eventsData = await eventsService.findAll()
+        
+        const eventCards: EventCard[] = eventsData.map((event) => {
+          const eventDate = new Date(event.date)
+          const dateStr = eventDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          const timeStr = eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          
+          return {
+            id: event.id.toString(),
+            title: event.title,
+            date: dateStr,
+            time: timeStr,
+            person: event.dependent?.name || 'Dependente',
+          }
+        })
+        
+        setEvents(eventCards)
+      } catch (err) {
+        console.error('Error fetching events:', err)
+        setEventsError('Erro ao carregar eventos')
+      } finally {
+        setIsLoadingEvents(false)
+      }
+    }
+
+    fetchEvents()
+  }, [])
 
   const cadastros: MedicationCard[] = [
     {
@@ -219,6 +232,7 @@ export const Home: React.FC = () => {
     id: evt.id,
     content: (
       <Card
+        onClick={() => navigate(`/agenda/${evt.id}`)}
         sx={{
           bgcolor: 'white',
           border: '1px solid #e5e5e5',
@@ -498,7 +512,21 @@ export const Home: React.FC = () => {
             Ver Mais
           </Button>
         </Box>
-        <Carousel items={eventItems} showDots={true} />
+        {isLoadingEvents ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : eventsError ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Typography sx={{ color: '#d32f2f', fontSize: '14px' }}>{eventsError}</Typography>
+          </Box>
+        ) : events.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Typography sx={{ color: '#666', fontSize: '14px' }}>Nenhum evento encontrado</Typography>
+          </Box>
+        ) : (
+          <Carousel items={eventItems} showDots={true} />
+        )}
       </Box>
 
       {/* Cadastros */}
