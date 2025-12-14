@@ -1,3 +1,5 @@
+import { useEvent } from '@/services/agenda/agenda.hooks'
+import { formatDate } from '@/utils/agenda'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
@@ -12,36 +14,33 @@ import {
   MenuItem,
   Typography
 } from '@mui/material'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
-// Mock data - substituir por chamada à API
-const mockAppointment = {
-  id: '1',
-  title: 'Eletrocardiograma',
-  description: 'Exame',
-  date: '20/03',
-  dayOfWeek: 'Quinta',
-  time: '09:00',
-  doctor: {
-    name: 'Dr. Marco Di\'Angelo',
-    specialty: 'Cardiologia Clínica',
-  },
-  dependent: {
-    id: '1',
-    name: 'Graça Lima',
-    age: 35,
-    avatar: '/avatars/graca-lima.jpg',
-  },
-  location: {
-    name: 'AmorSaúde Caragibe',
-    address: 'Rua dos Camaragibes, 123',
-    rating: 5.0,
-    reviews: 230,
-    mapImage: '/maps/amorosaude-caragibe.jpg',
-  },
-  comments: 'Sem comentários',
-  diagnosis: 'Aguardando diagnóstico',
+interface EventData {
+  id: string
+  title: string
+  description?: string
+  date: string
+  time: string
+  doctor?: string | {
+    id: string
+    name: string
+    specialty?: string
+    createdAt?: string
+    updatedAt?: string
+  }
+  location?: string
+  comments?: string
+  diagnosis?: string
+  dependentId?: string
+  dependent?: {
+    id: string
+    name: string
+    age?: number
+    avatar?: string
+  }
+  [key: string]: unknown
 }
 
 export const AgendaDetails = () => {
@@ -50,8 +49,51 @@ export const AgendaDetails = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const menuOpen = Boolean(anchorEl)
 
-  // TODO: Buscar dados reais da API usando o id
-  const appointment = mockAppointment
+  const { data: event, isLoading, isError } = useEvent(id)
+
+  const appointment = useMemo(() => {
+    if (!event) return null
+
+    const eventData = event as unknown as EventData
+    const { date: formattedDate, dayOfWeek } = formatDate(eventData.date)
+    const dateParts = formattedDate.split('/')
+    const shortDate = `${dateParts[0]}/${dateParts[1]}`
+
+    // Tratar doctor como objeto ou string
+    const doctorData = typeof eventData.doctor === 'object' && eventData.doctor !== null
+      ? eventData.doctor
+      : null
+    const doctorName = doctorData?.name || (typeof eventData.doctor === 'string' ? eventData.doctor : 'Não informado')
+    const doctorSpecialty = doctorData?.specialty || 'Não informado'
+
+    return {
+      id: eventData.id,
+      title: eventData.title || 'Sem título',
+      description: eventData.description || '',
+      date: shortDate,
+      dayOfWeek: dayOfWeek.substring(0, 5), // Primeiras 5 letras (ex: "Quinta")
+      time: eventData.time || '',
+      doctor: {
+        name: doctorName,
+        specialty: doctorSpecialty,
+      },
+      dependent: {
+        id: eventData.dependentId || eventData.dependent?.id || '',
+        name: eventData.dependent?.name || 'Não informado',
+        age: eventData.dependent?.age,
+        avatar: eventData.dependent?.avatar,
+      },
+      location: {
+        name: eventData.location || 'Não informado',
+        address: '',
+        rating: 0,
+        reviews: 0,
+        mapImage: '',
+      },
+      comments: eventData.comments || 'Sem comentários',
+      diagnosis: eventData.diagnosis || 'Aguardando diagnóstico',
+    }
+  }, [event])
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -76,8 +118,30 @@ export const AgendaDetails = () => {
     navigate(`/agenda/${id}/editar`)
   }
 
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+        <Typography variant="body1" color="text.secondary">
+          Carregando evento...
+        </Typography>
+      </Box>
+    )
+  }
+
+  if (isError || !appointment) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+        <Typography variant="body1" color="error.main">
+          Não foi possível carregar os dados do evento.
+        </Typography>
+      </Box>
+    )
+  }
+
   const handleDependentClick = () => {
-    navigate(`/dependentes/${appointment.dependent.id}`)
+    if (appointment.dependent.id) {
+      navigate(`/dependentes/${appointment.dependent.id}`)
+    }
   }
 
   return (

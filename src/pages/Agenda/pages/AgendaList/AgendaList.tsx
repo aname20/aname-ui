@@ -1,3 +1,9 @@
+import { useCalendarEvents } from '@/services/agenda/agenda.hooks'
+import {
+  mountCalendarEvents,
+  type AppointmentGroup,
+  type CalendarEvent
+} from '@/utils/agenda'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -11,100 +17,24 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-
-interface Appointment {
-  id: string
-  title: string
-  date: string
-  time: string
-  location: string
-}
-
-interface AppointmentGroup {
-  date: string
-  dayOfWeek: string
-  appointments: Appointment[]
-}
-
-const mockData: AppointmentGroup[] = [
-  {
-    date: '03/04/2025',
-    dayOfWeek: 'Quarta-feira',
-    appointments: [
-      {
-        id: '1',
-        title: 'Eletrocardiograma',
-        date: '03/04/2025',
-        time: '8:00',
-        location: 'Clínica Amor Saúde',
-      },
-    ],
-  },
-  {
-    date: '12/04/2025',
-    dayOfWeek: 'Sábado',
-    appointments: [
-      {
-        id: '2',
-        title: 'Infiltração no joelho',
-        date: '12/04/2025',
-        time: '10:00',
-        location: 'Clínica Amor Saúde',
-      },
-      {
-        id: '3',
-        title: 'Avaliação Neuropsicológica',
-        date: '12/04/2025',
-        time: '13:00',
-        location: 'Clínica Amor Saúde',
-      },
-    ],
-  },
-  {
-    date: '15/04/2025',
-    dayOfWeek: 'Terça-feira',
-    appointments: [
-      {
-        id: '4',
-        title: 'Fisioterapia',
-        date: '15/04/2025',
-        time: '9:30',
-        location: 'Clínica Amor Saúde',
-      },
-    ],
-  },
-  {
-    date: '07/05/2025',
-    dayOfWeek: 'Quarta-feira',
-    appointments: [
-      {
-        id: '5',
-        title: 'Ultrassom',
-        date: '07/05/2025',
-        time: '10:00',
-        location: 'Clínica Amor Saúde',
-      },
-      {
-        id: '6',
-        title: 'Mamografia',
-        date: '07/05/2025',
-        time: '14:00',
-        location: 'Clínica Amor Saúde',
-      },
-    ],
-  },
-]
 
 export const AgendaList = () => {
   const navigate = useNavigate()
   const [tabValue, setTabValue] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
+  const { data: events = [], isLoading, isError } = useCalendarEvents()
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
   }
+
+  const groupedAppointments = useMemo<AppointmentGroup[]>(() => {
+    const calendarEvents: CalendarEvent[] = (events as unknown) as CalendarEvent[]
+
+    return mountCalendarEvents(calendarEvents, searchQuery, tabValue)
+  }, [events, searchQuery, tabValue])
 
   return (
     <Box sx={{ pb: 2 }}>
@@ -147,7 +77,6 @@ export const AgendaList = () => {
         />
       </Tabs>
 
-      {/* Search Bar + Add Button */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         <TextField
           placeholder="Pesquisar"
@@ -187,24 +116,46 @@ export const AgendaList = () => {
         </Button>
       </Box>
 
-      {/* Appointments Timeline */}
-      <Box sx={{ position: 'relative' }}>
-        {/* Continuous vertical line for entire timeline */}
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 8,
-            top: 28,
-            bottom: 0,
-            width: 2,
-            borderLeft: '2px dashed #456CE8',
-            opacity: 0.3,
-          }}
-        />
-        
-        {mockData.map((group, groupIndex) => (
-          <Box key={group.date} sx={{ position: 'relative', mb: groupIndex < mockData.length - 1 ? 4 : 0 }}>
-            {/* Date Header */}
+      {isLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <Typography variant="body1" color="text.secondary">
+            Carregando eventos...
+          </Typography>
+        </Box>
+      )}
+
+      {isError && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <Typography variant="body1" color="error.main">
+            Erro ao carregar eventos. Tente novamente mais tarde.
+          </Typography>
+        </Box>
+      )}
+
+      {!isLoading && !isError && groupedAppointments.length === 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <Typography variant="body1" color="text.secondary">
+            {searchQuery ? 'Nenhum evento encontrado para sua busca.' : 'Nenhum evento encontrado.'}
+          </Typography>
+        </Box>
+      )}
+
+      {!isLoading && !isError && groupedAppointments.length > 0 && (
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 8,
+              top: 28,
+              bottom: 0,
+              width: 2,
+              borderLeft: '2px dashed #456CE8',
+              opacity: 0.3,
+            }}
+          />
+
+          {groupedAppointments.map((group, groupIndex) => (
+            <Box key={group.date} sx={{ position: 'relative', mb: groupIndex < groupedAppointments.length - 1 ? 4 : 0 }}>
             <Typography
               variant="body2"
               sx={{
@@ -217,14 +168,12 @@ export const AgendaList = () => {
               {group.date} ({group.dayOfWeek})
             </Typography>
 
-            {/* Appointments */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               {group.appointments.map((appointment) => (
                 <Box
                   key={appointment.id}
                   sx={{ position: 'relative', pl: 2.5 }}
                 >
-                  {/* Timeline dot */}
                   <Box
                     sx={{
                       position: 'absolute',
@@ -279,7 +228,8 @@ export const AgendaList = () => {
             </Box>
           </Box>
         ))}
-      </Box>
+        </Box>
+      )}
     </Box>
   )
 }
