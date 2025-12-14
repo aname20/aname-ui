@@ -1,3 +1,6 @@
+import { eventsService } from '@/services/events/events.service'
+import type { Event } from '@/types/event'
+import { mountCalendarEvents, type AppointmentGroup, type CalendarEvent } from '@/utils/agenda'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -12,78 +15,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { eventsService } from '@/services/events/events.service'
-import type { Event } from '@/types/event'
-
-interface Appointment {
-  id: string
-  title: string
-  date: string
-  time: string
-  location: string
-}
-
-interface AppointmentGroup {
-  date: string
-  dayOfWeek: string
-  appointments: Appointment[]
-}
-
-
-interface AppointmentGroup {
-  date: string
-  dayOfWeek: string
-  appointments: Appointment[]
-}
-
-// Helper function to group events by date
-const groupEventsByDate = (events: Event[]): AppointmentGroup[] => {
-  const groups: { [key: string]: Event[] } = {}
-  
-  events.forEach((event) => {
-    const eventDate = new Date(event.date)
-    const dateKey = eventDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    
-    if (!groups[dateKey]) {
-      groups[dateKey] = []
-    }
-    groups[dateKey].push(event)
-  })
-  
-  return Object.entries(groups)
-    .sort(([dateA], [dateB]) => {
-      const [dayA, monthA, yearA] = dateA.split('/').map(Number)
-      const [dayB, monthB, yearB] = dateB.split('/').map(Number)
-      return new Date(yearA, monthA - 1, dayA).getTime() - new Date(yearB, monthB - 1, dayB).getTime()
-    })
-    .map(([date, events]) => {
-      const eventDate = new Date(events[0].date)
-      const dayOfWeek = eventDate.toLocaleDateString('pt-BR', { weekday: 'long' })
-      const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)
-      
-      const appointments: Appointment[] = events.map((event) => {
-        const eventDate = new Date(event.date)
-        const dateStr = eventDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        const timeStr = eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        
-        return {
-          id: event.id.toString(),
-          title: event.title,
-          date: dateStr,
-          time: timeStr,
-          location: event.location || 'Local não informado',
-        }
-      })
-      
-      return {
-        date,
-        dayOfWeek: capitalizedDayOfWeek,
-        appointments,
-      }
-    })
-}
 
 export const AgendaList = () => {
   const navigate = useNavigate()
@@ -115,21 +48,25 @@ export const AgendaList = () => {
     setTabValue(newValue)
   }
 
-  // Filter events based on tab (scheduled vs history)
-  const filteredEvents = events.filter((event) => {
-    const isScheduled = event.status === 'SCHEDULED'
-    const matchesTab = tabValue === 0 ? isScheduled : !isScheduled
-    
-    // Apply search filter
-    const matchesSearch = searchQuery
-      ? event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.location?.toLowerCase().includes(searchQuery.toLowerCase())
-      : true
-    
-    return matchesTab && matchesSearch
-  })
+  // Converter Event[] para CalendarEvent[] e usar mountCalendarEvents
+  const groupedAppointments = useMemo<AppointmentGroup[]>(() => {
+    // Converter Event para CalendarEvent
+    const calendarEvents: CalendarEvent[] = events.map((event) => {
+      const eventDate = new Date(event.date)
+      const hours = eventDate.getHours().toString().padStart(2, '0')
+      const minutes = eventDate.getMinutes().toString().padStart(2, '0')
+      
+      return {
+        id: event.id.toString(),
+        title: event.title,
+        date: event.date, // Formato ISO
+        time: `${hours}:${minutes}`,
+        location: event.location,
+      }
+    })
 
-  const groupedAppointments = groupEventsByDate(filteredEvents)
+    return mountCalendarEvents(calendarEvents, searchQuery, tabValue)
+  }, [events, searchQuery, tabValue])
 
   return (
     <Box sx={{ pb: 2 }}>
