@@ -51,8 +51,6 @@ interface ProfileData {
   dependents: DependentProfile[]
 }
 
-const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=456CE8&color=fff&size=200'
-
 export const ProfileDetails = () => {
   const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -65,6 +63,10 @@ export const ProfileDetails = () => {
 
   const { data: dependents = [], isLoading: isLoadingDependents } = useDependents()
 
+  const profileDefaultAvatar = useMemo(() => {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(userFromStore?.name || '')}&background=456CE8&color=fff&size=200`
+  }, [userFromStore?.name])
+
   const profile = useMemo<ProfileData | null>(() => {
     const currentUser = user || userFromStore
 
@@ -75,7 +77,7 @@ export const ProfileDetails = () => {
     return {
       id: currentUser.id,
       name: currentUser.name,
-      avatar: currentUser.avatar || DEFAULT_AVATAR,
+      avatar: currentUser.avatar || profileDefaultAvatar,
       dependents: dependents.map((dependent) => {
         const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(dependent.name)}&background=456CE8&color=fff&size=200`
 
