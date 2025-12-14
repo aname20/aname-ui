@@ -1,8 +1,9 @@
 import { ArrowForward, Folder, People, PersonAdd } from '@mui/icons-material'
-import { Box, Button, Card, Typography } from '@mui/material'
-import React from 'react'
+import { Box, Button, Card, Typography, CircularProgress } from '@mui/material'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Carousel } from '../../components/Carousel'
+import { prescriptionsService } from '@/services/prescriptions/prescriptions.service'
 
 interface MedicationCard {
   id: string
@@ -24,33 +25,44 @@ interface EventCard {
 {/* mock simulador de dados */}
 export const Home: React.FC = () => {
   const navigate = useNavigate()
+  const [medications, setMedications] = useState<MedicationCard[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const medications: MedicationCard[] = [
-    {
-      id: "1",
-      name: "Clonazepam",
-      dosage: "5mg",
-      frequency: "2x ao dia",
-      times: "7:00 | 19:00",
-      person: "Graça Lima",
-    },
-    {
-      id: "2",
-      name: "Prostaline",
-      dosage: "1000mg",
-      frequency: "4x ao dia",
-      times: "6:00 | 12:00 | 18:00 | 00:00",
-      person: "Joaquim Bezerra",
-    },
-    {
-      id: "3",
-      name: "Vitamina D",
-      dosage: "2000UI",
-      frequency: "1x ao dia",
-      times: "08:00",
-      person: "Maria Silva",
-    },
-  ]
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const prescriptions = await prescriptionsService.findAll()
+        
+        const medicationCards: MedicationCard[] = prescriptions.map((prescription) => {
+          const times = prescription.schedules?.map(s => s.time).join(' | ') || ''
+          const frequency = prescription.schedules?.length 
+            ? `${prescription.schedules.length}x ao dia` 
+            : 'Não especificado'
+          
+          return {
+            id: prescription.id.toString(),
+            name: prescription.medication?.name || 'Medicamento',
+            dosage: prescription.dosage || '',
+            frequency,
+            times,
+            person: prescription.dependent?.name || 'Dependente',
+          }
+        })
+        
+        setMedications(medicationCards)
+      } catch (err) {
+        console.error('Error fetching prescriptions:', err)
+        setError('Erro ao carregar medicamentos')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPrescriptions()
+  }, [])
 
   const events: EventCard[] = [
     {
@@ -425,7 +437,21 @@ export const Home: React.FC = () => {
             Ver Mais
           </Button>
         </Box>
-        <Carousel items={medicationItems} showDots={true} />
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Typography sx={{ color: '#d32f2f', fontSize: '14px' }}>{error}</Typography>
+          </Box>
+        ) : medications.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Typography sx={{ color: '#666', fontSize: '14px' }}>Nenhum medicamento encontrado</Typography>
+          </Box>
+        ) : (
+          <Carousel items={medicationItems} showDots={true} />
+        )}
       </Box>
 
       {/* Próximos Eventos */}
