@@ -1,10 +1,11 @@
-import { ArrowForward, Folder, People, PersonAdd } from '@mui/icons-material'
-import { Box, Button, Card, Typography, CircularProgress } from '@mui/material'
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router'
-import { Carousel } from '../../components/Carousel'
-import { prescriptionsService } from '@/services/prescriptions/prescriptions.service'
 import { eventsService } from '@/services/events/events.service'
+import { prescriptionsService } from '@/services/prescriptions/prescriptions.service'
+import { ArrowForward, Folder, People, PersonAdd } from '@mui/icons-material'
+import { Box, Button, Card, CircularProgress, Typography } from '@mui/material'
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { Banner } from '../../components/Banner'
+import { Carousel } from '../../components/Carousel'
 
 interface MedicationCard {
   id: string
@@ -559,49 +560,8 @@ export const Home: React.FC = () => {
         <Carousel items={suaAreaItems} showDots={true} />
       </Box>
 
-      {/* Banner */}
       <Box component="section" sx={{ mb: 3 }}>
-        <Box
-          sx={{
-            background: 'linear-gradient(135deg, #27ae60 0%, #16a34a 100%)',
-            borderRadius: 3,
-            p: 2.5,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            color: '#fff',
-          }}
-        >
-          <Box>
-            <Typography
-              sx={{
-                fontSize: '16px',
-                fontWeight: 900,
-                m: 0,
-                mb: 0.5,
-                letterSpacing: '1px',
-                bgcolor: 'rgba(255,0,0,0.7)',
-                display: 'inline-block',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              Titulo do banner
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: '12px',
-                m: 0,
-                mt: 1,
-                opacity: 0.9,
-                fontWeight: 700,
-              }}
-            >
-              Texto se necessário
-            </Typography>
-          </Box>
-        </Box>
+        <Banner />
       </Box>
     </Box>
   )
