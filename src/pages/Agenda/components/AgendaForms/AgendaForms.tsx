@@ -1,19 +1,23 @@
 import { PrimaryInput } from '@/components/forms/PrimaryInput'
 import { PrimarySelect } from '@/components/forms/PrimarySelect'
 import SearchIcon from '@mui/icons-material/Search'
-import { Box, Button, InputAdornment, MenuItem } from '@mui/material'
+import { Box, Button, InputAdornment, MenuItem, Autocomplete, TextField } from '@mui/material'
 import { Controller, type Control, type FieldErrors } from 'react-hook-form'
+import { useState, useEffect } from 'react'
+import { dependentService } from '@/services/dependents/dependents.service'
+import { doctorsService } from '@/services/doctors/doctors.service'
+import type { Dependent } from '@/types/medication'
+import type { Doctor } from '@/types/event'
 
 interface AgendaFormData {
   title: string
-  description: string
-  diagnosis: string
+  description?: string
   dependentId: string
   date: string
   time: string
-  doctor: string
-  location: string
-  comments?: string
+  location?: string
+  diagnosis?: string
+  doctorId?: number | null
 }
 
 interface AgendaFormsProps {
@@ -22,6 +26,7 @@ interface AgendaFormsProps {
   onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>
   onCancel: () => void
   submitLabel?: string
+  isSubmitting?: boolean
 }
 
 export const AgendaForms: React.FC<AgendaFormsProps> = ({
@@ -30,7 +35,45 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
   onSubmit,
   onCancel,
   submitLabel = 'Salvar',
+  isSubmitting = false,
 }) => {
+  const [dependents, setDependents] = useState<Dependent[]>([])
+  const [isLoadingDependents, setIsLoadingDependents] = useState(true)
+  const [doctors, setDoctors] = useState<Doctor[]>([])
+  const [isLoadingDoctors, setIsLoadingDoctors] = useState(true)
+
+  useEffect(() => {
+    const fetchDependents = async () => {
+      try {
+        setIsLoadingDependents(true)
+        const data = await dependentService.getDependents()
+        setDependents(data)
+      } catch (error) {
+        console.error('Error fetching dependents:', error)
+      } finally {
+        setIsLoadingDependents(false)
+      }
+    }
+
+    fetchDependents()
+  }, [])
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setIsLoadingDoctors(true)
+        const data = await doctorsService.findAll()
+        setDoctors(data)
+      } catch (error) {
+        console.error('Error fetching doctors:', error)
+      } finally {
+        setIsLoadingDoctors(false)
+      }
+    }
+
+    fetchDoctors()
+  }, [])
+
   return (
     <Box component="form" onSubmit={onSubmit} sx={{ pb: 2, pt: 2 }}>
       {/* Título */}
@@ -60,6 +103,8 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
             label="Descrição"
             placeholder="Ex: Consulta, Exame, Cirurgia, etc..."
             fullWidth
+            multiline
+            rows={3}
             error={!!errors.description}
             helperText={errors.description?.message}
             sx={{ mb: 2 }}
@@ -79,11 +124,16 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
             error={!!errors.dependentId}
             helperText={errors.dependentId?.message}
             sx={{ mb: 2 }}
+            disabled={isLoadingDependents}
           >
-            <MenuItem value="">Selecionar</MenuItem>
-            <MenuItem value="1">João Silva</MenuItem>
-            <MenuItem value="2">Maria Santos</MenuItem>
-            <MenuItem value="3">Pedro Costa</MenuItem>
+            <MenuItem value="">
+              {isLoadingDependents ? 'Carregando...' : 'Selecionar'}
+            </MenuItem>
+            {dependents.map((dependent) => (
+              <MenuItem key={dependent.id} value={dependent.id}>
+                {dependent.name}
+              </MenuItem>
+            ))}
           </PrimarySelect>
         )}
       />
@@ -129,16 +179,36 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
 
       {/* Médico */}
       <Controller
-        name="doctor"
+        name="doctorId"
         control={control}
-        render={({ field }) => (
-          <PrimaryInput
+        render={({ field: { onChange, value, ...field } }) => (
+          <Autocomplete
             {...field}
-            label="Médico"
-            placeholder="Inserir Nome do Médico"
-            fullWidth
-            error={!!errors.doctor}
-            helperText={errors.doctor?.message}
+            options={doctors}
+            getOptionLabel={(option) => `${option.name} - ${option.specialty}`}
+            loading={isLoadingDoctors}
+            value={doctors.find((d) => d.id === value) || null}
+            onChange={(_, newValue) => {
+              onChange(newValue?.id || null)
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Médico (Opcional)"
+                placeholder="Buscar médico"
+                error={!!errors.doctorId}
+                helperText={errors.doctorId?.message}
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {isLoadingDoctors ? <SearchIcon sx={{ color: '#9E9E9E' }} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
             sx={{ mb: 2 }}
           />
         )}
@@ -163,45 +233,26 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
                 </InputAdornment>
               ),
             }}
-            sx={{ mb: 2 }}
-          />
-        )}
-      />
-
-      {/* Comentários */}
-      <Controller
-        name="comments"
-        control={control}
-        render={({ field }) => (
-          <PrimaryInput
-            {...field}
-            label="Comentários"
-            placeholder="Adicione comentários ou observações"
-            fullWidth
-            multiline
-            rows={4}
-            error={!!errors.comments}
-            helperText={errors.comments?.message}
             sx={{ mb: 3 }}
           />
         )}
       />
 
-       {/* Diagnóstico */}
+      {/* Diagnóstico */}
       <Controller
         name="diagnosis"
         control={control}
         render={({ field }) => (
           <PrimaryInput
             {...field}
-            label="Diagnóstico"
-            placeholder="Inserir Diagnóstico"
+            label="Diagnóstico (Opcional)"
+            placeholder="Inserir diagnóstico médico"
             fullWidth
-            error={!!errors.diagnosis}
-            helperText={errors.diagnosis?.message}
-            sx={{ mb: 2 }}
             multiline
             rows={4}
+            error={!!errors.diagnosis}
+            helperText={errors.diagnosis?.message}
+            sx={{ mb: 3 }}
           />
         )}
       />
@@ -212,6 +263,7 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
           type="submit"
           variant="contained"
           fullWidth
+          disabled={isSubmitting || isLoadingDependents}
           sx={{
             bgcolor: '#456CE8',
             textTransform: 'none',
@@ -222,9 +274,13 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
             '&:hover': {
               bgcolor: '#3557c9',
             },
+            '&:disabled': {
+              bgcolor: '#BDBDBD',
+              color: '#FFFFFF',
+            },
           }}
         >
-          {submitLabel}
+          {isSubmitting ? 'Salvando...' : submitLabel}
         </Button>
         <Button
           type="button"
@@ -252,4 +308,3 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
     </Box>
   )
 }
-

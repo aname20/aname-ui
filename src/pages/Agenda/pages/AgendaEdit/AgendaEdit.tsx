@@ -1,61 +1,144 @@
 import { AgendaForms } from '@/pages/Agenda/components/AgendaForms'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router'
+import { eventsService } from '@/services/events/events.service'
+import type { UpdateEventDto } from '@/types/event'
 import { agendaNewSchema, type AgendaNewFormData } from '../AgendaNew/schemas/agendaNew.schema'
-
-// Mock data - substituir por chamada à API
-const mockAppointment = {
-  id: '1',
-  title: 'Eletrocardiograma',
-  description: 'Exame',
-  diagnosis: 'Arritmia cardíaca',
-  dependentId: '1',
-  date: '2025-03-20',
-  time: '09:00',
-  doctor: 'Dr. Marco Di\'Angelo',
-  location: 'AmorSaúde Caragibe',
-  comments: 'Sem comentários',
-}
+import { Box, CircularProgress, Typography } from '@mui/material'
 
 export const AgendaEdit = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-
-  // TODO: Buscar dados reais da API usando o id
-  const appointment = mockAppointment
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const {
     control,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm({
     resolver: yupResolver(agendaNewSchema),
     defaultValues: {
-      title: appointment.title,
-      description: appointment.description,
-      diagnosis: appointment.diagnosis,
-      dependentId: appointment.dependentId,
-      date: appointment.date,
-      time: appointment.time,
-      doctor: appointment.doctor,
-      location: appointment.location,
-      comments: appointment.comments,
+      title: '',
+      description: '',
+      dependentId: '',
+      date: '',
+      time: '',
+      location: '',
+      diagnosis: '',
+      doctorId: null,
     },
   })
 
+  useEffect(() => {
+    const fetchEvent = async () => {
+      if (!id) {
+        setError('ID do evento não fornecido')
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        setError(null)
+        const event = await eventsService.findOne(parseInt(id))
+        
+        // Transform API date to form format
+        const eventDate = new Date(event.date)
+        const dateStr = eventDate.toISOString().split('T')[0] // YYYY-MM-DD
+        const timeStr = eventDate.toTimeString().slice(0, 5) // HH:MM
+
+        // Populate form with event data
+        reset({
+          title: event.title,
+          description: event.description || '',
+          dependentId: event.dependentId,
+          date: dateStr,
+          time: timeStr,
+          location: event.location || '',
+          diagnosis: event.diagnosis || '',
+          doctorId: event.doctorId || null,
+        })
+      } catch (err: any) {
+        console.error('Error fetching event:', err)
+        setError('Erro ao carregar evento')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchEvent()
+  }, [id, reset])
+
   const onSubmit = async (data: AgendaNewFormData) => {
+    if (!id) return
+
     try {
-      // TODO: Implementar chamada à API para atualizar
-      console.log('Dados atualizados:', data, 'ID:', id)
-      navigate(`/agenda/${id}`)
-    } catch (error) {
+      setIsSubmitting(true)
+      
+      // Combine date and time into ISO string
+      const [year, month, day] = data.date.split('-')
+      const [hours, minutes] = data.time.split(':')
+      const dateTime = new Date(
+        parseInt(year),
+        parseInt(month) - 1,
+        parseInt(day),
+        parseInt(hours),
+        parseInt(minutes)
+      ).toISOString()
+
+      const eventData: UpdateEventDto = {
+        title: data.title,
+        description: data.description,
+        date: dateTime,
+        location: data.location,
+        diagnosis: data.diagnosis,
+        dependentId: data.dependentId,
+      }
+
+      // Add doctorId if selected
+      if (data.doctorId) {
+        eventData.doctorId = data.doctorId
+      }
+
+      console.log('Updating event:', eventData)
+      await eventsService.update(parseInt(id), eventData)
+      navigate('/agenda')
+    } catch (error: any) {
       console.error('Erro ao atualizar agendamento:', error)
+      console.error('Error response:', error.response?.data)
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Erro desconhecido'
+      alert(`Erro ao atualizar evento: ${errorMessage}`)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleCancel = () => {
-    navigate(`/agenda/${id}`)
+    navigate('/agenda')
+  }
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error" variant="h6">
+          {error}
+        </Typography>
+      </Box>
+    )
   }
 
   return (
@@ -66,7 +149,7 @@ export const AgendaEdit = () => {
       onSubmit={handleSubmit(onSubmit)}
       onCancel={handleCancel}
       submitLabel="Atualizar"
+      isSubmitting={isSubmitting}
     />
   )
 }
-
