@@ -50,7 +50,7 @@ class PrescriptionService extends BaseService {
   }
 
   async updatePrescription(prescriptionId: string, data: UpdatePrescriptionDTO): Promise<Prescription> {
-    return this.patch<Prescription>(`/${prescriptionId}`, data)
+    return this.put<Prescription>(`/${prescriptionId}`, data)
   }
 
   async getMedications(): Promise<Medication[]> {

@@ -1,6 +1,7 @@
-import { useCreatePrescription } from '@/services/prescriptions/prescription.hooks'
-import { useMedications } from '@/services/medications/medication.hooks'
+import { errorToast, successToast } from '@/hooks/useToast'
 import { useDependents } from '@/services/dependents/dependents.hooks'
+import { useMedications } from '@/services/medications/medication.hooks'
+import { useCreatePrescription } from '@/services/prescriptions/prescription.hooks'
 import { formatDate } from '@/utils/date'
 import { yupResolver } from '@hookform/resolvers/yup'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
@@ -8,7 +9,6 @@ import AddIcon from '@mui/icons-material/Add'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import CloseIcon from '@mui/icons-material/Close'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import SearchIcon from '@mui/icons-material/Search'
 import {
   Box,
   Button,
@@ -17,16 +17,12 @@ import {
   FormControlLabel,
   IconButton,
   InputAdornment,
-  List,
-  ListItemButton,
-  ListItemText,
   MenuItem,
-  Paper,
   Select,
   TextField,
   Typography,
 } from '@mui/material'
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useMemo } from 'react'
 import { Controller, useFieldArray, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { defaultMedicationValues } from './constants'
@@ -34,26 +30,27 @@ import {
   addMedicationSchema,
   type AddMedicationFormData,
 } from './schema/schema'
-import { errorToast } from '@/hooks/useToast'
 
 export const AddMedication: React.FC = () => {
   const navigate = useNavigate()
   const createPrescription = useCreatePrescription()
   const { data: dependents = [] } = useDependents()
-  const { data: medications = [] } = useMedications()
-  const [medicationSearch, setMedicationSearch] = useState('')
-  const [showMedicationSuggestions, setShowMedicationSuggestions] = useState(false)
-  const medicationInputRef = useRef<HTMLDivElement>(null)
+  const { data: medicationsData } = useMedications()
+
+  const medications = useMemo(() => {
+    const medications = medicationsData?.data || []
+
+    return Array.isArray(medications) ? medications : []
+  }, [medicationsData])
 
   const {
     control,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<AddMedicationFormData>({
     resolver: yupResolver(addMedicationSchema) as unknown as Resolver<AddMedicationFormData, unknown, AddMedicationFormData>,
     defaultValues: {
-      medication: defaultMedicationValues.medication,
+      medicationId: defaultMedicationValues.medicationId,
       dependent: defaultMedicationValues.dependent,
       doctor: defaultMedicationValues.doctor,
       dosage: defaultMedicationValues.dosage,
@@ -76,42 +73,11 @@ export const AddMedication: React.FC = () => {
     defaultValue: defaultMedicationValues.continuousUse,
   })
 
-  const filteredMedications = useMemo(() => {
-    if (medicationSearch.length < 3) {
-      return []
-    }
-    const searchLower = medicationSearch.toLowerCase()
-    return medications.filter((med) =>
-      med.name.toLowerCase().includes(searchLower)
-    )
-  }, [medicationSearch, medications])
-
-  const handleMedicationChange = (value: string) => {
-    setMedicationSearch(value)
-    setValue('medication', value, { shouldValidate: true })
-
-    if (value.length >= 3) {
-      const searchLower = value.toLowerCase()
-      const filtered = medications.filter((med) =>
-        med.name.toLowerCase().includes(searchLower)
-      )
-
-      setShowMedicationSuggestions(filtered.length > 0)
-    } else {
-      setShowMedicationSuggestions(false)
-    }
-  }
-
-  const handleSelectMedication = (medicationId: number, medicationName: string) => {
-    setValue('medication', String(medicationId), { shouldValidate: true })
-
-    setMedicationSearch(medicationName)
-    setShowMedicationSuggestions(false)
-  }
-
   const onSubmit = async (data: AddMedicationFormData) => {
     try {
       await createPrescription.mutateAsync(data)
+
+      successToast('Prescrição criada com sucesso')
       navigate('/remedios')
     } catch {
       errorToast('Erro ao criar prescrição')
@@ -139,7 +105,7 @@ export const AddMedication: React.FC = () => {
       noValidate
       sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
     >
-      <Box sx={{ position: 'relative' }}>
+      <Box>
         <Typography
           variant="body2"
           sx={{
@@ -152,96 +118,53 @@ export const AddMedication: React.FC = () => {
         >
           Remédio
         </Typography>
-        <Box ref={medicationInputRef}>
-          <Controller
-            name="medication"
-            control={control}
-            render={({ field }) => (
-              <TextField
+        <Controller
+          name="medicationId"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth size="small" error={!!errors.medicationId}>
+              <Select
                 {...field}
-                value={medicationSearch || field.value || ''}
+                displayEmpty
+                value={field.value || ''}
                 onChange={(e) => {
-                  handleMedicationChange(e.target.value)
+                  field.onChange(Number(e.target.value))
                 }}
-                onFocus={() => {
-                  if (medicationSearch.length >= 3) {
-                    const searchLower = medicationSearch.toLowerCase()
-                    const filtered = medications.filter((med) =>
-                      med.name.toLowerCase().includes(searchLower)
-                    )
-                    setShowMedicationSuggestions(filtered.length > 0)
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
                   }
-                }}
-                onBlur={() => {
 
-                  setTimeout(() => {
-                    setShowMedicationSuggestions(false)
-                  }, 200)
+                  const medication = medications.find(m => m.id === Number(selected))
+
+                  return medication?.name || selected
                 }}
-                fullWidth
-                size="small"
-                placeholder="Pesquisar Remédio (mínimo 3 letras)"
-                error={!!errors.medication}
-                helperText={errors.medication?.message}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <SearchIcon sx={{ color: 'text.secondary' }} />
-                    </InputAdornment>
-                  ),
-                }}
+                IconComponent={KeyboardArrowDownIcon}
                 sx={{
                   bgcolor: 'background.paper',
                   borderRadius: 2,
-                  '& .MuiOutlinedInput-root': {
+                  '& .MuiOutlinedInput-notchedOutline': {
                     borderRadius: 2,
                   },
                 }}
-              />
-            )}
-          />
-        </Box>
-        {showMedicationSuggestions && filteredMedications.length > 0 && (
-          <Paper
-            elevation={3}
-            sx={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              zIndex: 1000,
-              mt: 0.5,
-              maxHeight: 300,
-              overflow: 'auto',
-              borderRadius: 2,
-            }}
-          >
-            <List dense sx={{ py: 0 }}>
-              {filteredMedications.map((medication) => (
-                <ListItemButton
-                  key={medication.id}
-                  onClick={() => handleSelectMedication(medication.id, medication.name)}
-                  sx={{
-                    '&:hover': {
-                      bgcolor: 'action.hover',
-                    },
-                  }}
+              >
+                {medications.map((medication) => (
+                  <MenuItem key={medication.id} value={medication.id}>
+                    {medication.name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {errors.medicationId && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'error.main', mt: 0.5, ml: 1.75 }}
                 >
-                  <ListItemText
-                    primary={medication.name}
-                    secondary={medication.description}
-                    primaryTypographyProps={{
-                      fontSize: '0.875rem',
-                    }}
-                    secondaryTypographyProps={{
-                      fontSize: '0.75rem',
-                    }}
-                  />
-                </ListItemButton>
-              ))}
-            </List>
-          </Paper>
-        )}
+                  {errors.medicationId.message}
+                </Typography>
+              )}
+            </FormControl>
+          )}
+        />
       </Box>
 
       <Box>
@@ -355,16 +278,9 @@ export const AddMedication: React.FC = () => {
               {...field}
               fullWidth
               size="small"
-              placeholder="Pesquisar a dosagem"
+              placeholder="Inserir a dosagem"
               error={!!errors.dosage}
               helperText={errors.dosage?.message}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <SearchIcon sx={{ color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-              }}
               sx={{
                 bgcolor: 'background.paper',
                 borderRadius: 2,

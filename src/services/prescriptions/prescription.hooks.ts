@@ -90,7 +90,7 @@ export function useDeletePrescription() {
  * Helper function to convert form data to Prescription DTO
  */
 export function mapFormDataToPrescription(formData: {
-  medication: string
+  medicationId: number
   dependent: string
   doctor: string
   dosage: string
@@ -113,14 +113,9 @@ export function mapFormDataToPrescription(formData: {
     }
   }
 
-  // Parse medicationId from medication name or use 0 as fallback
-  // If medication is a number (ID), use it directly, otherwise the API should handle lookup by name
-  // TODO: Consider adding a medication lookup service if the API requires ID
-  const medicationId = parseInt(formData.medication) || 0
-
   return {
     dependentId: formData.dependent,
-    medicationId,
+    medicationId: formData.medicationId,
     dosage: formData.dosage,
     doctorName: formData.doctor,
     notes: formData.comments,
