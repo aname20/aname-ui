@@ -66,12 +66,16 @@ export const ProfileDetails = () => {
   const { data: dependents = [], isLoading: isLoadingDependents } = useDependents()
 
   const profile = useMemo<ProfileData | null>(() => {
-    if (!user) return null
+    const currentUser = user || userFromStore
+
+    if (!currentUser) {
+      return null
+    }
 
     return {
-      id: user.id,
-      name: user.name,
-      avatar: user.avatar || DEFAULT_AVATAR,
+      id: currentUser.id,
+      name: currentUser.name,
+      avatar: currentUser.avatar || DEFAULT_AVATAR,
       dependents: dependents.map((dependent) => {
         const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(dependent.name)}&background=456CE8&color=fff&size=200`
 
@@ -86,7 +90,7 @@ export const ProfileDetails = () => {
         }
       }),
     }
-  }, [user, dependents])
+  }, [user, userFromStore, dependents])
 
   const isLoading = isLoadingUser || isLoadingDependents
   const isError = isErrorUser
