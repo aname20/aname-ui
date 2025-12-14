@@ -1,3 +1,7 @@
+import { useDependents } from '@/services/dependents/dependents.hooks'
+import { useUserById } from '@/services/users/users.hooks'
+import { useAuthStore } from '@/stores/authStore'
+import type { Dependent } from '@/types/medication'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import LocalPhoneIcon from '@mui/icons-material/LocalPhone'
@@ -6,6 +10,7 @@ import {
   Avatar,
   Box,
   Chip,
+  CircularProgress,
   IconButton,
   ListItemIcon,
   ListItemText,
@@ -13,7 +18,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 // Função para formatar telefone
@@ -32,49 +37,59 @@ const formatPhoneNumber = (value: string): string => {
   }
 }
 
-interface EmergencyContact {
-  id: string
-  name: string
-  phone: string
-}
-
-interface Dependent {
+interface DependentProfile {
   id: string
   name: string
   avatar: string
+  emergencyContact: string | null
 }
 
 interface ProfileData {
   id: string
   name: string
-  age: number
   avatar: string
-  emergencyContacts: EmergencyContact[]
-  dependents: Dependent[]
+  dependents: DependentProfile[]
 }
 
-const mockProfile: ProfileData = {
-  id: '1',
-  name: 'Luana Gomes',
-  age: 26,
-  avatar: 'https://i.pravatar.cc/150?img=47',
-  emergencyContacts: [
-    { id: '1', name: 'Raquel', phone: '81996778855' },
-    { id: '2', name: 'João', phone: '81996778855' },
-  ],
-  dependents: [
-    { id: '1', name: 'Cristina', avatar: 'https://i.pravatar.cc/150?img=48' },
-    { id: '2', name: 'João', avatar: 'https://i.pravatar.cc/150?img=15' },
-  ],
-}
+const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=456CE8&color=fff&size=200'
 
 export const ProfileDetails = () => {
   const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const menuOpen = Boolean(anchorEl)
 
-  // TODO: Buscar dados reais da API
-  const profile = mockProfile
+  const userFromStore = useAuthStore((state) => state.user)
+  const userId = userFromStore?.id
+
+  const { data: user, isLoading: isLoadingUser, isError: isErrorUser } = useUserById(userId || '')
+
+  const { data: dependents = [], isLoading: isLoadingDependents } = useDependents()
+
+  const profile = useMemo<ProfileData | null>(() => {
+    if (!user) return null
+
+    return {
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar || DEFAULT_AVATAR,
+      dependents: dependents.map((dependent) => {
+        const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(dependent.name)}&background=456CE8&color=fff&size=200`
+
+        const dependentWithEmergencyContact = dependent as Dependent & { emergencyContact?: string | null }
+        const emergencyContact = dependentWithEmergencyContact.emergencyContact || null
+
+        return {
+          id: dependent.id,
+          name: dependent.name,
+          avatar: defaultAvatar,
+          emergencyContact,
+        }
+      }),
+    }
+  }, [user, dependents])
+
+  const isLoading = isLoadingUser || isLoadingDependents
+  const isError = isErrorUser
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -85,8 +100,7 @@ export const ProfileDetails = () => {
   }
 
   const handleEdit = () => {
-    // TODO: Navegar para edição de perfil
-    console.log('Editar perfil')
+    navigate('/perfil/editar')
     handleMenuClose()
   }
 
@@ -94,16 +108,32 @@ export const ProfileDetails = () => {
     window.open(`tel:${phone}`, '_blank')
   }
 
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (isError || !profile) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+        <Typography variant="body1" color="error.main">
+          Não foi possível carregar os dados do perfil.
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
     <Box sx={{ pb: 2 }}>
-      {/* Menu de 3 pontos */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <IconButton onClick={handleMenuOpen} size="small">
           <MoreVertIcon />
         </IconButton>
       </Box>
 
-      {/* Menu de Opções */}
       <Menu
         anchorEl={anchorEl}
         open={menuOpen}
@@ -125,7 +155,6 @@ export const ProfileDetails = () => {
         </MenuItem>
       </Menu>
 
-      {/* Avatar e Nome (Centralizados) */}
       <Box
         sx={{
           display: 'flex',
@@ -140,11 +169,10 @@ export const ProfileDetails = () => {
           sx={{ width: 100, height: 100, mb: 2 }}
         />
         <Typography variant="h6" sx={{ color: '#456CE8', fontWeight: 600 }}>
-          {profile.name} ({profile.age} anos)
+          {profile.name}
         </Typography>
       </Box>
 
-      {/* Contatos de Emergência dos Dependentes */}
       <Box sx={{ mb: 3 }}>
         <Typography
           variant="body2"
@@ -155,43 +183,77 @@ export const ProfileDetails = () => {
             textAlign: 'center',
           }}
         >
-          Contato de Emergência dos Dependentes:
+          Contatos de Emergência dos Dependentes:
         </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
-          {profile.emergencyContacts.map((contact) => (
-            <Chip
-              key={contact.id}
-              icon={
-                <Box
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {profile.dependents.map((dependent) => {
+            if (!dependent.emergencyContact) {
+              return null
+            }
+
+            return (
+              <Box key={dependent.id} sx={{ mb: 1 }}>
+                <Typography
+                  variant="body2"
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    color: '#456CE8',
+                    fontWeight: 600,
+                    mb: 1,
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
                   }}
                 >
-                  <LocalPhoneIcon sx={{ fontSize: 14, color: '#456CE8' }} />
+                  {dependent.name}:
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+                  <Chip
+                    icon={
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <LocalPhoneIcon sx={{ fontSize: 14, color: '#456CE8' }} />
+                      </Box>
+                    }
+                    label={formatPhoneNumber(dependent.emergencyContact)}
+                    onClick={() => handleCallContact(dependent.emergencyContact!)}
+                    sx={{
+                      bgcolor: '#E8EEFF',
+                      color: '#456CE8',
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      border: '1.5px solid #456CE8',
+                      cursor: 'pointer',
+                      px: 1,
+                      '&:hover': {
+                        bgcolor: '#D6E4FF',
+                      },
+                    }}
+                  />
                 </Box>
-              }
-              label={`${contact.name}: ${formatPhoneNumber(contact.phone)}`}
-              onClick={() => handleCallContact(contact.phone)}
+              </Box>
+            )
+          })}
+          {profile.dependents.every((dep) => !dep.emergencyContact) && (
+            <Typography
+              variant="body2"
               sx={{
-                bgcolor: '#E8EEFF',
-                color: '#456CE8',
-                fontWeight: 600,
+                color: '#9E9E9E',
+                textAlign: 'center',
                 fontSize: '0.875rem',
-                border: '1.5px solid #456CE8',
-                cursor: 'pointer',
-                px: 1,
-                '&:hover': {
-                  bgcolor: '#D6E4FF',
-                },
+                fontStyle: 'italic',
               }}
-            />
-          ))}
+            >
+              Nenhum contato de emergência cadastrado
+            </Typography>
+          )}
         </Box>
       </Box>
 
-      {/* Meus Dependentes */}
       <Box
         sx={{
           border: '1px solid #E0E0E0',
@@ -210,11 +272,29 @@ export const ProfileDetails = () => {
         >
           Meus Dependentes
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {profile.dependents.map((dependent) => (
+        {profile.dependents.length === 0 ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 4,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#9E9E9E',
+                mb: 3,
+                fontSize: '0.875rem',
+                textAlign: 'center',
+              }}
+            >
+              Nenhum dependente cadastrado
+            </Typography>
             <Box
-              key={dependent.id}
-              onClick={() => navigate(`/dependentes/${dependent.id}`)}
+              onClick={() => navigate('/dependentes/novo')}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -222,16 +302,23 @@ export const ProfileDetails = () => {
                 cursor: 'pointer',
               }}
             >
-              <Avatar
-                src={dependent.avatar}
+              <Box
                 sx={{
                   width: 70,
                   height: 70,
-                  border: '3px solid #D9D0C7',
+                  borderRadius: '50%',
+                  bgcolor: '#F3F4F6',
+                  border: '3px solid #E5E7EB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  '&:hover': {
+                    bgcolor: '#E5E7EB',
+                  },
                 }}
               >
-                {dependent.name.charAt(0)}
-              </Avatar>
+                <AddIcon sx={{ fontSize: 32, color: '#9E9E9E' }} />
+              </Box>
               <Typography
                 variant="caption"
                 sx={{
@@ -245,55 +332,95 @@ export const ProfileDetails = () => {
                   fontWeight: 600,
                 }}
               >
-                {dependent.name}
+                Adicionar
               </Typography>
             </Box>
-          ))}
-
-          {/* Botão Adicionar Dependente */}
-          <Box
-            onClick={() => navigate('/dependentes/novo')}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            <Box
-              sx={{
-                width: 70,
-                height: 70,
-                borderRadius: '50%',
-                bgcolor: '#F3F4F6',
-                border: '3px solid #E5E7EB',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                '&:hover': {
-                  bgcolor: '#E5E7EB',
-                },
-              }}
-            >
-              <AddIcon sx={{ fontSize: 32, color: '#9E9E9E' }} />
-            </Box>
-            <Typography
-              variant="caption"
-              sx={{
-                mt: 0.5,
-                bgcolor: '#456CE8',
-                color: 'white',
-                px: 1.5,
-                py: 0.5,
-                borderRadius: 2,
-                fontSize: '0.75rem',
-                fontWeight: 600,
-              }}
-            >
-              Adicionar
-            </Typography>
           </Box>
-        </Box>
+        ) : (
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {profile.dependents.map((dependent) => (
+              <Box
+                key={dependent.id}
+                onClick={() => navigate(`/dependentes/${dependent.id}`)}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <Avatar
+                  src={dependent.avatar}
+                  sx={{
+                    width: 70,
+                    height: 70,
+                    border: '3px solid #D9D0C7',
+                  }}
+                >
+                  {dependent.name.charAt(0)}
+                </Avatar>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    mt: 0.5,
+                    bgcolor: '#456CE8',
+                    color: 'white',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 2,
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {dependent.name}
+                </Typography>
+              </Box>
+            ))}
+
+            <Box
+              onClick={() => navigate('/dependentes/novo')}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 70,
+                  height: 70,
+                  borderRadius: '50%',
+                  bgcolor: '#F3F4F6',
+                  border: '3px solid #E5E7EB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  '&:hover': {
+                    bgcolor: '#E5E7EB',
+                  },
+                }}
+              >
+                <AddIcon sx={{ fontSize: 32, color: '#9E9E9E' }} />
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  mt: 0.5,
+                  bgcolor: '#456CE8',
+                  color: 'white',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 2,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                }}
+              >
+                Adicionar
+              </Typography>
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   )
