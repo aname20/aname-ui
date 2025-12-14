@@ -1,13 +1,11 @@
 import { PrimaryInput } from '@/components/forms/PrimaryInput'
 import { PrimarySelect } from '@/components/forms/PrimarySelect'
-import SearchIcon from '@mui/icons-material/Search'
-import { Box, Button, InputAdornment, MenuItem, Autocomplete, TextField } from '@mui/material'
-import { Controller, type Control, type FieldErrors } from 'react-hook-form'
-import { useState, useEffect } from 'react'
 import { dependentService } from '@/services/dependents/dependents.service'
-import { doctorsService } from '@/services/doctors/doctors.service'
 import type { Dependent } from '@/types/medication'
-import type { Doctor } from '@/types/event'
+import SearchIcon from '@mui/icons-material/Search'
+import { Box, Button, InputAdornment, MenuItem } from '@mui/material'
+import { useEffect, useState } from 'react'
+import { Controller, type Control, type FieldErrors } from 'react-hook-form'
 
 interface AgendaFormData {
   title: string
@@ -17,7 +15,8 @@ interface AgendaFormData {
   time: string
   location?: string
   diagnosis?: string
-  doctorId?: number | null
+  doctorName: string
+  doctorCrm?: string
 }
 
 interface AgendaFormsProps {
@@ -39,8 +38,6 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
 }) => {
   const [dependents, setDependents] = useState<Dependent[]>([])
   const [isLoadingDependents, setIsLoadingDependents] = useState(true)
-  const [doctors, setDoctors] = useState<Doctor[]>([])
-  const [isLoadingDoctors, setIsLoadingDoctors] = useState(true)
 
   useEffect(() => {
     const fetchDependents = async () => {
@@ -56,22 +53,6 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
     }
 
     fetchDependents()
-  }, [])
-
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        setIsLoadingDoctors(true)
-        const data = await doctorsService.findAll()
-        setDoctors(data)
-      } catch (error) {
-        console.error('Error fetching doctors:', error)
-      } finally {
-        setIsLoadingDoctors(false)
-      }
-    }
-
-    fetchDoctors()
   }, [])
 
   return (
@@ -177,38 +158,35 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
         />
       </Box>
 
-      {/* Médico */}
+      {/* Nome do Médico */}
       <Controller
-        name="doctorId"
+        name="doctorName"
         control={control}
-        render={({ field: { onChange, value, ...field } }) => (
-          <Autocomplete
+        render={({ field }) => (
+          <PrimaryInput
             {...field}
-            options={doctors}
-            getOptionLabel={(option) => `${option.name} - ${option.specialty}`}
-            loading={isLoadingDoctors}
-            value={doctors.find((d) => d.id === value) || null}
-            onChange={(_, newValue) => {
-              onChange(newValue?.id || null)
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Médico (Opcional)"
-                placeholder="Buscar médico"
-                error={!!errors.doctorId}
-                helperText={errors.doctorId?.message}
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {isLoadingDoctors ? <SearchIcon sx={{ color: '#9E9E9E' }} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
+            label="Nome do Médico"
+            placeholder="Inserir nome do médico"
+            fullWidth
+            error={!!errors.doctorName}
+            helperText={errors.doctorName?.message}
+            sx={{ mb: 2 }}
+          />
+        )}
+      />
+
+      {/* CRM */}
+      <Controller
+        name="doctorCrm"
+        control={control}
+        render={({ field }) => (
+          <PrimaryInput
+            {...field}
+            label="CRM"
+            placeholder="Inserir CRM do médico"
+            fullWidth
+            error={!!errors.doctorCrm}
+            helperText={errors.doctorCrm?.message}
             sx={{ mb: 2 }}
           />
         )}
@@ -245,7 +223,7 @@ export const AgendaForms: React.FC<AgendaFormsProps> = ({
         render={({ field }) => (
           <PrimaryInput
             {...field}
-            label="Diagnóstico (Opcional)"
+            label="Diagnóstico"
             placeholder="Inserir diagnóstico médico"
             fullWidth
             multiline

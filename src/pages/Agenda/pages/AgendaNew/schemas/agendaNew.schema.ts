@@ -8,7 +8,8 @@ export const agendaNewSchema = yup.object({
   time: yup.string().required('Hora obrigatória'),
   location: yup.string(),
   diagnosis: yup.string(),
-  doctorId: yup.number().nullable(),
+  doctorName: yup.string().required('Nome do médico obrigatório'),
+  doctorCrm: yup.string(),
 })
 
 export type AgendaNewFormData = yup.InferType<typeof agendaNewSchema>

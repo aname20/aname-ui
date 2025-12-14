@@ -7,14 +7,14 @@ export interface Event {
   location?: string
   diagnosis?: string
   dependentId: string
-  doctorId?: number
+  doctorName: string
+  doctorCrm?: string
   createdAt: string
   updatedAt: string
   dependent?: {
     name: string
     age?: number
   }
-  doctor?: Doctor
 }
 
 export type EventStatus = 'SCHEDULED' | 'DONE' | 'CANCELED'
@@ -34,7 +34,8 @@ export interface CreateEventDto {
   location?: string
   diagnosis?: string
   dependentId: string
-  doctorId?: number
+  doctorName: string
+  doctorCrm?: string
 }
 
 export interface UpdateEventDto {
@@ -45,5 +46,6 @@ export interface UpdateEventDto {
   location?: string
   diagnosis?: string
   dependentId?: string
-  doctorId?: number
+  doctorName?: string
+  doctorCrm?: string
 }
