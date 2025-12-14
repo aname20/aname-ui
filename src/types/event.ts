@@ -11,6 +11,7 @@ export interface Event {
   updatedAt: string
   dependent?: {
     name: string
+    age?: number
   }
   doctor?: Doctor
 }
