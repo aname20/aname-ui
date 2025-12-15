@@ -6,7 +6,7 @@ import { formatPhoneNumber } from '@/utils/phone'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, Button, CircularProgress } from '@mui/material'
 import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { profileEditSchema, type ProfileEditFormData } from './schemas/profileEdit.schema'
 
@@ -21,7 +21,7 @@ export const ProfileEdit = () => {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<ProfileEditFormData>({
-    resolver: yupResolver(profileEditSchema),
+    resolver: yupResolver(profileEditSchema) as Resolver<ProfileEditFormData>,
     defaultValues: {
       name: '',
       email: '',
