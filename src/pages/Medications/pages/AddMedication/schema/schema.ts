@@ -11,11 +11,10 @@ const validateDate = (value: string | undefined): boolean => {
 }
 
 export const addMedicationSchema = yup.object({
-  medication: yup
-    .string()
-    .required('O nome do remédio é obrigatório')
-    .min(2, 'O nome deve ter no mínimo 2 caracteres')
-    .max(100, 'O nome deve ter no máximo 100 caracteres'),
+  medicationId: yup
+    .number()
+    .required('O remédio é obrigatório')
+    .typeError('Selecione um remédio'),
 
   dependent: yup
     .string()
@@ -77,7 +76,7 @@ export const addMedicationSchema = yup.object({
 })
 
 export interface AddMedicationFormData {
-  medication: string
+  medicationId: number
   dependent: string
   doctor: string
   dosage: string

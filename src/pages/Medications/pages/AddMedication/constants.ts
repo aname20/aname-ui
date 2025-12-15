@@ -1,6 +1,6 @@
 
 export const defaultMedicationValues = {
-  medication: '',
+  medicationId: undefined as unknown as number,
   dependent: '',
   doctor: '',
   dosage: '',

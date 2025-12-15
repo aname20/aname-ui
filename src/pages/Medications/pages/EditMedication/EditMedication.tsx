@@ -1,35 +1,35 @@
-import React, { useEffect } from 'react'
-import {
-  Box,
-  Typography,
-  TextField,
-  InputAdornment,
-  Button,
-  FormControl,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-  CircularProgress,
-} from '@mui/material'
-import SearchIcon from '@mui/icons-material/Search'
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import { errorToast, successToast } from '@/hooks/useToast'
+import { useDependents } from '@/services/dependents/dependents.hooks'
+import { useMedications } from '@/services/medications/medication.hooks'
+import { usePrescription, useUpdatePrescription } from '@/services/prescriptions/prescription.hooks'
+import { formatDate } from '@/utils/date'
+import { yupResolver } from '@hookform/resolvers/yup'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import AddIcon from '@mui/icons-material/Add'
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import CloseIcon from '@mui/icons-material/Close'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import {
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from '@mui/material'
+import React, { useEffect, useMemo } from 'react'
+import { Controller, useFieldArray, useForm, useWatch, type Resolver } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router'
-import { useForm, Controller, useFieldArray, useWatch, type Resolver } from 'react-hook-form'
-import { yupResolver } from '@hookform/resolvers/yup'
 import {
   editMedicationSchema,
   type EditMedicationFormData,
 } from './schema/schema'
-import { formatDate } from '@/utils/date'
-import { usePrescription, useUpdatePrescription } from '@/services/prescriptions/prescription.hooks'
-import { useDependents } from '@/services/dependents/dependents.hooks'
-import { errorToast } from '@/hooks/useToast'
 
 export const EditMedication: React.FC = () => {
   const navigate = useNavigate()
@@ -37,10 +37,25 @@ export const EditMedication: React.FC = () => {
   const { data: prescription, isLoading: isLoadingPrescription } = usePrescription(id || '', !!id)
   const updatePrescription = useUpdatePrescription()
   const { data: dependents = [] } = useDependents()
+  const { data: medicationsData } = useMedications()
 
-  // Valores padrão para o formulário
+  const medications = useMemo(() => {
+    if (!medicationsData) return []
+
+    if (Array.isArray(medicationsData)) {
+      return medicationsData
+    }
+
+    if (medicationsData && typeof medicationsData === 'object' && 'data' in medicationsData) {
+      const medications = (medicationsData as { data: unknown }).data
+      return Array.isArray(medications) ? medications : []
+    }
+
+    return []
+  }, [medicationsData])
+
   const defaultFormValues: EditMedicationFormData = {
-    medication: '',
+    medicationId: 0,
     dependent: '',
     doctor: '',
     dosage: '',
@@ -60,11 +75,10 @@ export const EditMedication: React.FC = () => {
     defaultValues: defaultFormValues,
   })
 
-  // Atualiza o formulário quando os dados da prescrição carregam
   useEffect(() => {
     if (prescription) {
-      // Converte a data de ISO para DD/MM/YYYY
       let dateUntil: string | undefined
+
       if (prescription.endDate) {
         const date = new Date(prescription.endDate)
         const day = String(date.getDate()).padStart(2, '0')
@@ -74,7 +88,7 @@ export const EditMedication: React.FC = () => {
       }
 
       reset({
-        medication: prescription.medication?.name || prescription.medicationId?.toString() || '',
+        medicationId: prescription.medicationId || 0,
         dependent: prescription.dependentId || '',
         doctor: prescription.doctorName || '',
         dosage: prescription.dosage || '',
@@ -100,9 +114,11 @@ export const EditMedication: React.FC = () => {
 
   const onSubmit = async (data: EditMedicationFormData) => {
     if (!id) return
-    
+
     try {
       await updatePrescription.mutateAsync({ id, data })
+
+      successToast('Prescrição atualizada com sucesso')
       navigate(`/remedios/${id}`)
     } catch {
       errorToast('Erro ao atualizar prescrição')
@@ -160,31 +176,50 @@ export const EditMedication: React.FC = () => {
           Remédio
         </Typography>
         <Controller
-          name="medication"
+          name="medicationId"
           control={control}
           render={({ field }) => (
-            <TextField
-              {...field}
-              fullWidth
-              size="small"
-              placeholder="Pesquisar Remédio"
-              error={!!errors.medication}
-              helperText={errors.medication?.message}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <SearchIcon sx={{ color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                bgcolor: 'background.paper',
-                borderRadius: 2,
-                '& .MuiOutlinedInput-root': {
+            <FormControl fullWidth size="small" error={!!errors.medicationId}>
+              <Select
+                {...field}
+                displayEmpty
+                value={field.value || ''}
+                onChange={(e) => {
+                  field.onChange(Number(e.target.value))
+                }}
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
+                  }
+
+                  const medication = medications.find(m => m.id === Number(selected))
+
+                  return medication?.name || selected
+                }}
+                IconComponent={KeyboardArrowDownIcon}
+                sx={{
+                  bgcolor: 'background.paper',
                   borderRadius: 2,
-                },
-              }}
-            />
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderRadius: 2,
+                  },
+                }}
+              >
+                {medications.map((medication) => (
+                  <MenuItem key={medication.id} value={medication.id}>
+                    {medication.name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {errors.medicationId && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'error.main', mt: 0.5, ml: 1.75 }}
+                >
+                  {errors.medicationId.message}
+                </Typography>
+              )}
+            </FormControl>
           )}
         />
       </Box>
@@ -300,16 +335,9 @@ export const EditMedication: React.FC = () => {
               {...field}
               fullWidth
               size="small"
-              placeholder="Pesquisar a dosagem"
+              placeholder="Inserir a dosagem"
               error={!!errors.dosage}
               helperText={errors.dosage?.message}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <SearchIcon sx={{ color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-              }}
               sx={{
                 bgcolor: 'background.paper',
                 borderRadius: 2,
