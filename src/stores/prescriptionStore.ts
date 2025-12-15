@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Prescription, Dependent, Medication, MedicationSchedule } from '@/types/medication'
+import type {
+  Prescription,
+  Dependent,
+  Medication,
+  MedicationSchedule,
+} from '@/types/medication'
 
 // Mock de dependentes disponíveis
 export const mockDependents: Dependent[] = [
@@ -9,6 +14,8 @@ export const mockDependents: Dependent[] = [
     name: 'Graça Lima',
     age: 72,
     susCode: '123456789012345',
+    conditions: [],
+    allergies: [],
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   },
@@ -17,6 +24,8 @@ export const mockDependents: Dependent[] = [
     name: 'Joaquim Bezerra',
     age: 68,
     susCode: '987654321098765',
+    conditions: [],
+    allergies: [],
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   },
@@ -25,6 +34,8 @@ export const mockDependents: Dependent[] = [
     name: 'Maria Luiz da Silva',
     age: 75,
     susCode: '456789123456789',
+    conditions: [],
+    allergies: [],
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   },
@@ -32,11 +43,41 @@ export const mockDependents: Dependent[] = [
 
 // Mock de medicamentos disponíveis
 export const mockMedications: Medication[] = [
-  { id: 1, name: 'Clonazepam', description: 'Ansiolítico', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 2, name: 'Losartana', description: 'Anti-hipertensivo', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 3, name: 'Metformina', description: 'Antidiabético', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 4, name: 'Omeprazol', description: 'Protetor gástrico', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 5, name: 'Atenolol', description: 'Beta-bloqueador', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  {
+    id: 1,
+    name: 'Clonazepam',
+    description: 'Ansiolítico',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 2,
+    name: 'Losartana',
+    description: 'Anti-hipertensivo',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 3,
+    name: 'Metformina',
+    description: 'Antidiabético',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 4,
+    name: 'Omeprazol',
+    description: 'Protetor gástrico',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 5,
+    name: 'Atenolol',
+    description: 'Beta-bloqueador',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
 ]
 
 // Prescrições iniciais mockadas
@@ -58,7 +99,13 @@ const initialPrescriptions: Prescription[] = [
     dependent: mockDependents[0],
     medication: mockMedications[0],
     schedules: [
-      { id: 1, prescriptionId: 1, time: '22:00', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+      {
+        id: 1,
+        prescriptionId: 1,
+        time: '22:00',
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
     ],
   },
   {
@@ -78,7 +125,13 @@ const initialPrescriptions: Prescription[] = [
     dependent: mockDependents[1],
     medication: mockMedications[1],
     schedules: [
-      { id: 2, prescriptionId: 2, time: '07:00', createdAt: '2024-02-01T00:00:00Z', updatedAt: '2024-02-01T00:00:00Z' },
+      {
+        id: 2,
+        prescriptionId: 2,
+        time: '07:00',
+        createdAt: '2024-02-01T00:00:00Z',
+        updatedAt: '2024-02-01T00:00:00Z',
+      },
     ],
   },
   {
@@ -98,8 +151,20 @@ const initialPrescriptions: Prescription[] = [
     dependent: mockDependents[2],
     medication: mockMedications[2],
     schedules: [
-      { id: 3, prescriptionId: 3, time: '12:30', createdAt: '2024-03-01T00:00:00Z', updatedAt: '2024-03-01T00:00:00Z' },
-      { id: 4, prescriptionId: 3, time: '19:30', createdAt: '2024-03-01T00:00:00Z', updatedAt: '2024-03-01T00:00:00Z' },
+      {
+        id: 3,
+        prescriptionId: 3,
+        time: '12:30',
+        createdAt: '2024-03-01T00:00:00Z',
+        updatedAt: '2024-03-01T00:00:00Z',
+      },
+      {
+        id: 4,
+        prescriptionId: 3,
+        time: '19:30',
+        createdAt: '2024-03-01T00:00:00Z',
+        updatedAt: '2024-03-01T00:00:00Z',
+      },
     ],
   },
 ]
@@ -124,20 +189,23 @@ interface PrescriptionStore {
   getPrescriptions: () => Promise<Prescription[]>
   getPrescriptionById: (id: number) => Promise<Prescription | undefined>
   addPrescription: (data: PrescriptionFormData) => Promise<Prescription>
-  updatePrescription: (id: number, data: PrescriptionFormData) => Promise<Prescription>
+  updatePrescription: (
+    id: number,
+    data: PrescriptionFormData,
+  ) => Promise<Prescription>
   deletePrescription: (id: number) => Promise<boolean>
 }
 
 // Função auxiliar para converter form data em Prescription
 const formDataToPrescription = (
   data: PrescriptionFormData,
-  existingId?: number
+  existingId?: number,
 ): Omit<Prescription, 'id'> & { id?: number } => {
   const now = new Date().toISOString()
 
   // Encontra ou cria o medicamento
   let medication = mockMedications.find(
-    (m) => m.name.toLowerCase() === data.medication.toLowerCase()
+    (m) => m.name.toLowerCase() === data.medication.toLowerCase(),
   )
 
   if (!medication) {
@@ -215,7 +283,7 @@ export const usePrescriptionStore = create<PrescriptionStore>()(
         await new Promise((resolve) => setTimeout(resolve, 200))
 
         const prescription = get().prescriptions.find(
-          (p) => p.id === id && !p.isDeleted
+          (p) => p.id === id && !p.isDeleted,
         )
         set({ isLoading: false })
 
@@ -293,7 +361,7 @@ export const usePrescriptionStore = create<PrescriptionStore>()(
 
         const currentPrescriptions = get().prescriptions
         const updatedPrescriptions = currentPrescriptions.map((p) =>
-          p.id === id ? { ...p, isDeleted: true } : p
+          p.id === id ? { ...p, isDeleted: true } : p,
         )
 
         set({
@@ -306,7 +374,6 @@ export const usePrescriptionStore = create<PrescriptionStore>()(
     }),
     {
       name: 'prescription-storage',
-    }
-  )
+    },
+  ),
 )
-

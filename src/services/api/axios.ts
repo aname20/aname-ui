@@ -1,10 +1,11 @@
 import axios, { AxiosError } from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000, // 30 segundos - APIs no Railway podem demorar na primeira requisição
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,13 +23,20 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error)
-  }
+  },
 )
 
 // Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    // Tratamento específico de timeout
+    if (error.code === 'ECONNABORTED') {
+      console.error(
+        '⏱️ Timeout: A API está demorando muito para responder. Isso é comum na primeira requisição (Railway pode estar "acordando" o servidor).',
+      )
+    }
+
     // Tratamento global de erros
     if (error.response?.status === 401) {
       // Token expirado ou inválido
@@ -48,6 +56,5 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error)
-  }
+  },
 )
-

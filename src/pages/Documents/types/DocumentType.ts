@@ -1,9 +1,11 @@
-export enum DocumentType {
+enum DocumentType {
   PRESCRIPTION = 'PRESCRIPTION', // Receita
   REPORT = 'REPORT', // Laudo
   EXAM = 'EXAM', // Exame
   OTHER = 'OTHER', // Outros
 }
+
+export { DocumentType }
 
 export const getDocumentTypeLabel = (type: DocumentType): string => {
   const labels = {
@@ -14,5 +16,3 @@ export const getDocumentTypeLabel = (type: DocumentType): string => {
   }
   return labels[type]
 }
-
-
