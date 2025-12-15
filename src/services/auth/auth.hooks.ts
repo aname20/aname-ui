@@ -27,7 +27,8 @@ export function useLogin() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
+    mutationFn: (credentials: LoginCredentials) =>
+      authService.login(credentials),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AUTH_KEYS.currentUser() })
     },
@@ -44,7 +45,7 @@ export function useRegister() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: RegisterData) => authService.register(data),
+    mutationFn: (data: RegisterData) => authService.signup(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AUTH_KEYS.currentUser() })
     },
@@ -84,7 +85,9 @@ export function useUpdateProfile() {
       await queryClient.cancelQueries({ queryKey: AUTH_KEYS.currentUser() })
 
       // Snapshot previous value
-      const previousUser = queryClient.getQueryData<User>(AUTH_KEYS.currentUser())
+      const previousUser = queryClient.getQueryData<User>(
+        AUTH_KEYS.currentUser(),
+      )
 
       // Optimistically update
       if (previousUser) {
@@ -96,7 +99,7 @@ export function useUpdateProfile() {
 
       return { previousUser }
     },
-    onError: (error, data, context) => {
+    onError: (error, _data, context) => {
       // Rollback on error
       if (context?.previousUser) {
         queryClient.setQueryData(AUTH_KEYS.currentUser(), context.previousUser)
@@ -115,11 +118,15 @@ export function useUpdateProfile() {
  */
 export function useChangePassword() {
   return useMutation({
-    mutationFn: ({ oldPassword, newPassword }: { oldPassword: string; newPassword: string }) =>
-      authService.changePassword(oldPassword, newPassword),
+    mutationFn: ({
+      oldPassword,
+      newPassword,
+    }: {
+      oldPassword: string
+      newPassword: string
+    }) => authService.changePassword(oldPassword, newPassword),
     onError: (error) => {
       console.error('Error changing password:', error)
     },
   })
 }
-

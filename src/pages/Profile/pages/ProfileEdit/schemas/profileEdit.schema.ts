@@ -6,4 +6,8 @@ export const profileEditSchema = yup.object({
   phone: yup.string().optional(),
 })
 
-export type ProfileEditFormData = yup.InferType<typeof profileEditSchema>
+export type ProfileEditFormData = {
+  name: string
+  email: string
+  phone?: string
+}

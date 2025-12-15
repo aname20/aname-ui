@@ -11,7 +11,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 const EXAMPLES_KEYS = {
   all: ['examples'] as const,
   lists: () => [...EXAMPLES_KEYS.all, 'list'] as const,
-  list: (filters?: ExampleFilters) => [...EXAMPLES_KEYS.lists(), filters] as const,
+  list: (filters?: ExampleFilters) =>
+    [...EXAMPLES_KEYS.lists(), filters] as const,
   details: () => [...EXAMPLES_KEYS.all, 'detail'] as const,
   detail: (id: string) => [...EXAMPLES_KEYS.details(), id] as const,
 }
@@ -71,7 +72,9 @@ export function useUpdateExample() {
       await queryClient.cancelQueries({ queryKey: EXAMPLES_KEYS.detail(id) })
 
       // Snapshot previous value
-      const previousExample = queryClient.getQueryData<Example>(EXAMPLES_KEYS.detail(id))
+      const previousExample = queryClient.getQueryData<Example>(
+        EXAMPLES_KEYS.detail(id),
+      )
 
       // Optimistically update
       if (previousExample) {
@@ -87,11 +90,14 @@ export function useUpdateExample() {
     onError: (error, { id }, context) => {
       // Rollback on error
       if (context?.previousExample) {
-        queryClient.setQueryData(EXAMPLES_KEYS.detail(id), context.previousExample)
+        queryClient.setQueryData(
+          EXAMPLES_KEYS.detail(id),
+          context.previousExample,
+        )
       }
       console.error('Error updating example:', error)
     },
-    onSettled: (data, error, { id }) => {
+    onSettled: (_data, _error, { id }) => {
       // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: EXAMPLES_KEYS.detail(id) })
       queryClient.invalidateQueries({ queryKey: EXAMPLES_KEYS.lists() })
@@ -112,7 +118,9 @@ export function useDeleteExample() {
       await queryClient.cancelQueries({ queryKey: EXAMPLES_KEYS.lists() })
 
       // Snapshot previous value
-      const previousLists = queryClient.getQueriesData({ queryKey: EXAMPLES_KEYS.lists() })
+      const previousLists = queryClient.getQueriesData({
+        queryKey: EXAMPLES_KEYS.lists(),
+      })
 
       // Optimistically remove from lists
       queryClient.setQueriesData<{ data: Example[] }>(
@@ -123,12 +131,12 @@ export function useDeleteExample() {
             ...old,
             data: old.data.filter((example) => example.id !== id),
           }
-        }
+        },
       )
 
       return { previousLists }
     },
-    onError: (error, id, context) => {
+    onError: (error, _id, context) => {
       // Rollback on error
       if (context?.previousLists) {
         context.previousLists.forEach(([queryKey, data]) => {
@@ -178,4 +186,3 @@ export function useBulkUpdateExamples() {
     },
   })
 }
-

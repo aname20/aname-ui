@@ -1,12 +1,14 @@
-export enum DocumentType {
-  PRESCRIPTION = 'PRESCRIPTION', // Receita
-  REPORT = 'REPORT', // Laudo
-  EXAM = 'EXAM', // Exame
-  OTHER = 'OTHER', // Outros
-}
+export const DocumentType = {
+  PRESCRIPTION: 'PRESCRIPTION',
+  REPORT: 'REPORT',
+  EXAM: 'EXAM',
+  OTHER: 'OTHER',
+} as const
+
+export type DocumentType = typeof DocumentType[keyof typeof DocumentType]
 
 export const getDocumentTypeLabel = (type: DocumentType): string => {
-  const labels = {
+  const labels: Record<DocumentType, string> = {
     [DocumentType.PRESCRIPTION]: 'Receita',
     [DocumentType.REPORT]: 'Laudo',
     [DocumentType.EXAM]: 'Exame',
@@ -14,5 +16,3 @@ export const getDocumentTypeLabel = (type: DocumentType): string => {
   }
   return labels[type]
 }
-
-

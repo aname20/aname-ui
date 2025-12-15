@@ -23,7 +23,13 @@ import {
   Typography,
 } from '@mui/material'
 import React, { useMemo } from 'react'
-import { Controller, useFieldArray, useForm, useWatch, type Resolver } from 'react-hook-form'
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useWatch,
+  type Resolver,
+} from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { defaultMedicationValues } from './constants'
 import {
@@ -38,9 +44,12 @@ export const AddMedication: React.FC = () => {
   const { data: medicationsData } = useMedications()
 
   const medications = useMemo(() => {
-    const medications = medicationsData?.data || []
+    // Verificar se medicationsData é array direto ou se tem propriedade data
+    const medicationsArray = Array.isArray(medicationsData)
+      ? medicationsData
+      : (medicationsData as any)?.data || []
 
-    return Array.isArray(medications) ? medications : []
+    return Array.isArray(medicationsArray) ? medicationsArray : []
   }, [medicationsData])
 
   const {
@@ -48,7 +57,11 @@ export const AddMedication: React.FC = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<AddMedicationFormData>({
-    resolver: yupResolver(addMedicationSchema) as unknown as Resolver<AddMedicationFormData, unknown, AddMedicationFormData>,
+    resolver: yupResolver(addMedicationSchema) as unknown as Resolver<
+      AddMedicationFormData,
+      unknown,
+      AddMedicationFormData
+    >,
     defaultValues: {
       medicationId: defaultMedicationValues.medicationId,
       dependent: defaultMedicationValues.dependent,
@@ -135,7 +148,9 @@ export const AddMedication: React.FC = () => {
                     return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
                   }
 
-                  const medication = medications.find(m => m.id === Number(selected))
+                  const medication = medications.find(
+                    (m) => m.id === Number(selected),
+                  )
 
                   return medication?.name || selected
                 }}
@@ -192,7 +207,7 @@ export const AddMedication: React.FC = () => {
                     return <span style={{ color: '#9e9e9e' }}>Selecionar</span>
                   }
                   // Busca o nome do dependente
-                  const dependent = dependents.find(d => d.id === selected)
+                  const dependent = dependents.find((d) => d.id === selected)
                   return dependent?.name || selected
                 }}
                 IconComponent={KeyboardArrowDownIcon}
@@ -440,10 +455,7 @@ export const AddMedication: React.FC = () => {
             </Box>
           ))}
           {errors.times && typeof errors.times.message === 'string' && (
-            <Typography
-              variant="caption"
-              sx={{ color: 'error.main', mt: -1 }}
-            >
+            <Typography variant="caption" sx={{ color: 'error.main', mt: -1 }}>
               {errors.times.message}
             </Typography>
           )}
