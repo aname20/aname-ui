@@ -1,22 +1,22 @@
+import { eventsService } from '@/services/events/events.service'
+import type { Event } from '@/types/event'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import {
-  Avatar,
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography
+    Avatar,
+    Box,
+    Button,
+    CircularProgress,
+    IconButton,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Typography
 } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { eventsService } from '@/services/events/events.service'
-import type { Event } from '@/types/event'
 
 
 
@@ -224,7 +224,7 @@ export const AgendaDetails = () => {
         </Box>
       </Box>
 
-      {/* Médico e Especialidade */}
+      {/* Médico e CRM */}
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         {/* Médico */}
         <Box sx={{ flex: 1 }}>
@@ -232,17 +232,17 @@ export const AgendaDetails = () => {
             Médico
           </Typography>
           <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-            {event.doctor?.name || 'Não informado'}
+            {event.doctorName || 'Não informado'}
           </Typography>
         </Box>
 
-        {/* Especialidade */}
+        {/* CRM */}
         <Box sx={{ flex: 1 }}>
           <Typography variant="body2" sx={{ color: '#000', fontWeight: 400, fontStyle: 'italic', mb: 0.5 }}>
-            Especialidade
+            CRM
           </Typography>
           <Typography variant="body1" sx={{ color: '#0033DA', fontWeight: 400 }}>
-            {event.doctor?.specialty || 'Não informado'}
+            {event.doctorCrm || 'Não informado'}
           </Typography>
         </Box>
       </Box>

@@ -1,12 +1,12 @@
 import { AgendaForms } from '@/pages/Agenda/components/AgendaForms'
-import { yupResolver } from '@hookform/resolvers/yup'
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { useNavigate, useParams } from 'react-router'
 import { eventsService } from '@/services/events/events.service'
 import type { UpdateEventDto } from '@/types/event'
-import { agendaNewSchema, type AgendaNewFormData } from '../AgendaNew/schemas/agendaNew.schema'
+import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, CircularProgress, Typography } from '@mui/material'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate, useParams } from 'react-router'
+import { agendaNewSchema, type AgendaNewFormData } from '../AgendaNew/schemas/agendaNew.schema'
 
 export const AgendaEdit = () => {
   const navigate = useNavigate()
@@ -30,7 +30,8 @@ export const AgendaEdit = () => {
       time: '',
       location: '',
       diagnosis: '',
-      doctorId: null,
+      doctorName: '',
+      doctorCrm: '',
     },
   })
 
@@ -61,7 +62,8 @@ export const AgendaEdit = () => {
           time: timeStr,
           location: event.location || '',
           diagnosis: event.diagnosis || '',
-          doctorId: event.doctorId || null,
+          doctorName: event.doctorName || '',
+          doctorCrm: event.doctorCrm || '',
         })
       } catch (err: any) {
         console.error('Error fetching event:', err)
@@ -98,11 +100,12 @@ export const AgendaEdit = () => {
         location: data.location,
         diagnosis: data.diagnosis,
         dependentId: data.dependentId,
+        doctorName: data.doctorName,
       }
 
-      // Add doctorId if selected
-      if (data.doctorId) {
-        eventData.doctorId = data.doctorId
+      // Add CRM if provided
+      if (data.doctorCrm) {
+        eventData.doctorCrm = data.doctorCrm
       }
 
       console.log('Updating event:', eventData)
